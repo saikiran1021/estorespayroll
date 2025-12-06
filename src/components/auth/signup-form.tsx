@@ -18,8 +18,8 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateProfile, onAuthStateChanged, type User, type AuthError } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
-import { useAuth, useFirestore, setDocumentNonBlocking, initiateEmailSignUp } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { useAuth, useFirestore, initiateEmailSignUp } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -123,10 +123,10 @@ export function SignupForm() {
                 }
 
 
-                setDocumentNonBlocking(userDocRef, userData, { merge: true });
+                await setDoc(userDocRef, userData, { merge: true });
 
                 const roleMapDocRef = doc(db, roleCollectionName, user.uid);
-                setDocumentNonBlocking(roleMapDocRef, { uid: user.uid }, { merge: true });
+                await setDoc(roleMapDocRef, { uid: user.uid }, { merge: true });
                 
                 await auth.signOut();
 

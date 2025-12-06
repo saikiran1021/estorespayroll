@@ -43,13 +43,18 @@ async function getUserRoleAndData(db: any, uid: string): Promise<{ role: UserRol
     };
 
     for (const [collectionName, role] of Object.entries(roleCollections)) {
-        const roleDocRef = doc(db, collectionName, uid);
-        const roleDoc = await getDoc(roleDocRef);
-        if (roleDoc.exists()) {
-            const profileCollection = collectionName.replace('roles_', '') + 's';
-            const userDocRef = doc(db, profileCollection, uid);
-            const userDoc = await getDoc(userDocRef);
-            return { role: role as UserRole, data: userDoc.exists() ? userDoc.data() : null };
+        try {
+            const roleDocRef = doc(db, collectionName, uid);
+            const roleDoc = await getDoc(roleDocRef);
+            if (roleDoc.exists()) {
+                const profileCollection = collectionName.replace('roles_', '') + 's';
+                const userDocRef = doc(db, profileCollection, uid);
+                const userDoc = await getDoc(userDocRef);
+                return { role: role as UserRole, data: userDoc.exists() ? userDoc.data() : null };
+            }
+        } catch (error) {
+            console.error(`Error checking role in ${collectionName}:`, error);
+            // Continue to the next role check
         }
     }
     return { role: null, data: null };
@@ -63,48 +68,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userRole, setUserRole] = useState<UserRole>(null);
   const [employeeId, setEmployeeId] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     const handleAuthChange = async () => {
+      setAuthLoading(true);
+      
       if (isUserLoading) {
         return; 
       }
       
       if (firebaseUser) {
         const { role, data } = await getUserRoleAndData(db, firebaseUser.uid);
-        if (role && data) {
-          setUserRole(role);
-          setEmployeeId(data.employeeId || null);
-          
+        setUserRole(role);
+        setEmployeeId(data?.employeeId || null);
+        
+        const isPublicRoute = publicRoutes.includes(pathname);
+        
+        if (role) {
           const targetPath = roleRedirects[role as keyof typeof roleRedirects];
-          if(publicRoutes.includes(pathname)){
-            router.push(targetPath || '/login');
+          if (isPublicRoute) {
+            setIsRedirecting(true);
+            router.replace(targetPath);
+            return;
           }
         } else {
           // User exists in Auth but not in a role collection, log them out.
           await auth.signOut();
-          setUserRole(null);
-          setEmployeeId(null);
-          router.push('/login');
+          if (!isPublicRoute) {
+            setIsRedirecting(true);
+            router.replace('/login');
+            return;
+          }
         }
       } else {
         setUserRole(null);
         setEmployeeId(null);
         if (!publicRoutes.includes(pathname)) {
-            router.push('/login');
+            setIsRedirecting(true);
+            router.replace('/login');
+            return;
         }
       }
       setAuthLoading(false);
+      setIsRedirecting(false);
     };
 
     handleAuthChange();
-  }, [firebaseUser, isUserLoading, router, pathname, db, auth]);
+  }, [firebaseUser, isUserLoading, pathname, db, auth, router]);
 
-  const loading = isUserLoading || authLoading;
-
+  const loading = isUserLoading || authLoading || isRedirecting;
+  
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -118,20 +135,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
-  
-  // This logic was causing the blank page.
-  // It prevented rendering children during the redirect phase after login.
-  // We should render children and let the useEffect handle the redirect.
-  // if (!publicRoutes.includes(pathname) && !firebaseUser) {
-  //   return null; // Don't render protected pages if user is not logged in
-  // }
-  // if(publicRoutes.includes(pathname) && firebaseUser){
-  //   return null; // Don't render login/signup if user is logged in
-  // }
-
 
   return (
-    <AuthContext.Provider value={{ user: firebaseUser, userRole, loading, employeeId }}>
+    <AuthContext.Provider value={{ user: firebaseUser, userRole, loading: authLoading, employeeId }}>
       {children}
     </AuthContext.Provider>
   );
