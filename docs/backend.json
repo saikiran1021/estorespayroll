@@ -1,0 +1,743 @@
+{
+  "entities": {
+    "Employee": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Employee",
+      "type": "object",
+      "description": "Represents an employee within the eStores WorkHub Pay Portal.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Employee entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The employee's first name."
+        },
+        "surname": {
+          "type": "string",
+          "description": "The employee's last name."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The employee's phone number."
+        },
+        "email": {
+          "type": "string",
+          "description": "The employee's email address.",
+          "format": "email"
+        },
+        "employeeId": {
+          "type": "string",
+          "description": "The unique employee identifier (e.g., ESG202512SK)."
+        },
+        "lastLogin": {
+          "type": "string",
+          "description": "Timestamp of the employee's last login.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "surname",
+        "phone",
+        "email",
+        "employeeId"
+      ]
+    },
+    "Admin": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Admin",
+      "type": "object",
+      "description": "Represents an administrator within the eStores WorkHub Pay Portal.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Admin entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The admin's first name."
+        },
+        "surname": {
+          "type": "string",
+          "description": "The admin's last name."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The admin's phone number."
+        },
+        "email": {
+          "type": "string",
+          "description": "The admin's email address.",
+          "format": "email"
+        },
+        "lastLogin": {
+          "type": "string",
+          "description": "Timestamp of the admin's last login.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "surname",
+        "phone",
+        "email"
+      ]
+    },
+    "SuperAdmin": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SuperAdmin",
+      "type": "object",
+      "description": "Represents a super administrator within the eStores WorkHub Pay Portal.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SuperAdmin entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The super admin's first name."
+        },
+        "surname": {
+          "type": "string",
+          "description": "The super admin's last name."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The super admin's phone number."
+        },
+        "email": {
+          "type": "string",
+          "description": "The super admin's email address.",
+          "format": "email"
+        },
+        "lastLogin": {
+          "type": "string",
+          "description": "Timestamp of the super admin's last login.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "surname",
+        "phone",
+        "email"
+      ]
+    },
+    "College": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "College",
+      "type": "object",
+      "description": "Represents a college user within the eStores WorkHub Pay Portal.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the College entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The college's name."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The college's phone number."
+        },
+        "email": {
+          "type": "string",
+          "description": "The college's email address.",
+          "format": "email"
+        },
+        "lastLogin": {
+          "type": "string",
+          "description": "Timestamp of the college's last login.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "phone",
+        "email"
+      ]
+    },
+    "Industry": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Industry",
+      "type": "object",
+      "description": "Represents an industry user within the eStores WorkHub Pay Portal.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Industry entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The industry's name."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The industry's phone number."
+        },
+        "email": {
+          "type": "string",
+          "description": "The industry's email address.",
+          "format": "email"
+        },
+        "lastLogin": {
+          "type": "string",
+          "description": "Timestamp of the industry's last login.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "phone",
+        "email"
+      ]
+    },
+    "Attendance": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Attendance",
+      "type": "object",
+      "description": "Represents an employee's attendance record.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Attendance entity."
+        },
+        "employeeId": {
+          "type": "string",
+          "description": "Reference to Employee. (Relationship: Employee 1:N Attendance)"
+        },
+        "date": {
+          "type": "string",
+          "description": "The date of the attendance record.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The attendance status (Present/Absent)."
+        }
+      },
+      "required": [
+        "id",
+        "employeeId",
+        "date",
+        "status"
+      ]
+    },
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents a task assigned to an employee.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Task entity."
+        },
+        "assignedToEmployeeId": {
+          "type": "string",
+          "description": "Reference to Employee. (Relationship: Employee 1:N Task)"
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the task."
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "The due date of the task.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the task."
+        }
+      },
+      "required": [
+        "id",
+        "assignedToEmployeeId",
+        "description",
+        "dueDate",
+        "status"
+      ]
+    },
+    "Message": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Message",
+      "type": "object",
+      "description": "Represents a message sent within the eStores WorkHub Pay Portal.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Message entity."
+        },
+        "fromRole": {
+          "type": "string",
+          "description": "The role of the sender (e.g., Employee, Admin)."
+        },
+        "fromEmail": {
+          "type": "string",
+          "description": "The email of the sender."
+        },
+        "toRole": {
+          "type": "string",
+          "description": "The role of the recipient (e.g., Employee, Admin)."
+        },
+        "toEmail": {
+          "type": "string",
+          "description": "The email of the recipient."
+        },
+        "subject": {
+          "type": "string",
+          "description": "The subject of the message."
+        },
+        "body": {
+          "type": "string",
+          "description": "The body of the message."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The timestamp of the message.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "fromRole",
+        "fromEmail",
+        "toRole",
+        "toEmail",
+        "subject",
+        "body",
+        "timestamp"
+      ]
+    },
+    "Revenue": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Revenue",
+      "type": "object",
+      "description": "Represents monthly revenue data.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Revenue entity."
+        },
+        "month": {
+          "type": "string",
+          "description": "The month of the revenue record."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of revenue for the month."
+        }
+      },
+      "required": [
+        "id",
+        "month",
+        "amount"
+      ]
+    },
+    "CollegeData": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CollegeData",
+      "type": "object",
+      "description": "Represents data related to colleges.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the CollegeData entity."
+        },
+        "collegeId": {
+          "type": "string",
+          "description": "Reference to College. (Relationship: College 1:N CollegeData)"
+        },
+        "industrialVisit": {
+          "type": "string",
+          "description": "Details of the industrial visit."
+        },
+        "sem": {
+          "type": "string",
+          "description": "The semester."
+        },
+        "ws": {
+          "type": "string",
+          "description": "Details of the workshop."
+        },
+        "domesticProgram": {
+          "type": "string",
+          "description": "Details of the domestic immersion program."
+        },
+        "international": {
+          "type": "string",
+          "description": "Details of international programs."
+        },
+        "authorizedName": {
+          "type": "string",
+          "description": "Name of the authorized person."
+        },
+        "authorizedEmail": {
+          "type": "string",
+          "description": "Email of the authorized person.",
+          "format": "email"
+        },
+        "authorizedMobile": {
+          "type": "string",
+          "description": "Mobile number of the authorized person."
+        }
+      },
+      "required": [
+        "id",
+        "collegeId",
+        "authorizedName",
+        "authorizedEmail",
+        "authorizedMobile"
+      ]
+    },
+    "IndustryData": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "IndustryData",
+      "type": "object",
+      "description": "Represents data related to industries.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the IndustryData entity."
+        },
+        "industryId": {
+          "type": "string",
+          "description": "Reference to Industry. (Relationship: Industry 1:N IndustryData)"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of industry."
+        },
+        "dates": {
+          "type": "string",
+          "description": "The dates related to the industry data.",
+          "format": "date-time"
+        },
+        "department": {
+          "type": "string",
+          "description": "The department."
+        },
+        "numStudents": {
+          "type": "number",
+          "description": "The number of students."
+        },
+        "advisorName": {
+          "type": "string",
+          "description": "The name of the advisor."
+        },
+        "contactNum": {
+          "type": "string",
+          "description": "The contact number."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "industryId",
+        "type",
+        "dates",
+        "department",
+        "numStudents",
+        "advisorName",
+        "contactNum",
+        "email"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/admins/{adminId}",
+        "definition": {
+          "entityName": "Admin",
+          "schema": {
+            "$ref": "#/backend/entities/Admin"
+          },
+          "description": "Stores admin user profiles. Authorization is based on the user's UID.",
+          "params": [
+            {
+              "name": "adminId",
+              "description": "The unique identifier of the admin user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/super_admins/{superAdminId}",
+        "definition": {
+          "entityName": "SuperAdmin",
+          "schema": {
+            "$ref": "#/backend/entities/SuperAdmin"
+          },
+          "description": "Stores super admin user profiles. Authorization is based on the user's UID.",
+          "params": [
+            {
+              "name": "superAdminId",
+              "description": "The unique identifier of the super admin user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/employees/{employeeId}",
+        "definition": {
+          "entityName": "Employee",
+          "schema": {
+            "$ref": "#/backend/entities/Employee"
+          },
+          "description": "Stores employee profiles. Authorization is based on the user's UID.",
+          "params": [
+            {
+              "name": "employeeId",
+              "description": "The unique identifier of the employee user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/colleges/{collegeId}",
+        "definition": {
+          "entityName": "College",
+          "schema": {
+            "$ref": "#/backend/entities/College"
+          },
+          "description": "Stores college profiles. Authorization is based on the user's UID.",
+          "params": [
+            {
+              "name": "collegeId",
+              "description": "The unique identifier of the college user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/industries/{industryId}",
+        "definition": {
+          "entityName": "Industry",
+          "schema": {
+            "$ref": "#/backend/entities/Industry"
+          },
+          "description": "Stores industry profiles. Authorization is based on the user's UID.",
+          "params": [
+            {
+              "name": "industryId",
+              "description": "The unique identifier of the industry user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/employees/{employeeId}/attendance/{attendanceId}",
+        "definition": {
+          "entityName": "Attendance",
+          "schema": {
+            "$ref": "#/backend/entities/Attendance"
+          },
+          "description": "Stores attendance records for each employee. Attendance records are owned by the employee.",
+          "params": [
+            {
+              "name": "employeeId",
+              "description": "The unique identifier of the employee."
+            },
+            {
+              "name": "attendanceId",
+              "description": "The unique identifier for the attendance record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/employees/{employeeId}/tasks/{taskId}",
+        "definition": {
+          "entityName": "Task",
+          "schema": {
+            "$ref": "#/backend/entities/Task"
+          },
+          "description": "Stores tasks assigned to each employee. Task records are owned by the employee.",
+          "params": [
+            {
+              "name": "employeeId",
+              "description": "The unique identifier of the employee."
+            },
+            {
+              "name": "taskId",
+              "description": "The unique identifier for the task."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": {
+            "$ref": "#/backend/entities/Message"
+          },
+          "description": "Stores messages sent within the application.  This is a top-level collection to allow cross-user messaging.",
+          "params": [
+            {
+              "name": "messageId",
+              "description": "The unique identifier for the message."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/revenue/{revenueId}",
+        "definition": {
+          "entityName": "Revenue",
+          "schema": {
+            "$ref": "#/backend/entities/Revenue"
+          },
+          "description": "Stores monthly revenue data. Accessible only by admins and super admins.",
+          "params": [
+            {
+              "name": "revenueId",
+              "description": "The unique identifier for the revenue record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/colleges/{collegeId}/collegeData/{collegeDataId}",
+        "definition": {
+          "entityName": "CollegeData",
+          "schema": {
+            "$ref": "#/backend/entities/CollegeData"
+          },
+          "description": "Stores data related to colleges. Each record is owned by the college.",
+          "params": [
+            {
+              "name": "collegeId",
+              "description": "The unique identifier of the college."
+            },
+            {
+              "name": "collegeDataId",
+              "description": "The unique identifier for the college data record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/industries/{industryId}/industryData/{industryDataId}",
+        "definition": {
+          "entityName": "IndustryData",
+          "schema": {
+            "$ref": "#/backend/entities/IndustryData"
+          },
+          "description": "Stores data related to industries. Each record is owned by the industry.",
+          "params": [
+            {
+              "name": "industryId",
+              "description": "The unique identifier of the industry."
+            },
+            {
+              "name": "industryDataId",
+              "description": "The unique identifier for the industry data record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{uid}",
+        "definition": {
+          "entityName": "Admin",
+          "schema": {
+            "$ref": "#/backend/entities/Admin"
+          },
+          "description": "Documents in this collection indicate admin privileges for the corresponding user ID.  The existence of a document implies the user is an admin.",
+          "params": [
+            {
+              "name": "uid",
+              "description": "The Firebase UID of the admin user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_super_admin/{uid}",
+        "definition": {
+          "entityName": "SuperAdmin",
+          "schema": {
+            "$ref": "#/backend/entities/SuperAdmin"
+          },
+          "description": "Documents in this collection indicate super admin privileges for the corresponding user ID. The existence of a document implies the user is a super admin.",
+          "params": [
+            {
+              "name": "uid",
+              "description": "The Firebase UID of the super admin user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_employee/{uid}",
+        "definition": {
+          "entityName": "Employee",
+          "schema": {
+            "$ref": "#/backend/entities/Employee"
+          },
+          "description": "Documents in this collection indicate employee privileges for the corresponding user ID. The existence of a document implies the user is an employee.",
+          "params": [
+            {
+              "name": "uid",
+              "description": "The Firebase UID of the employee user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_college/{uid}",
+        "definition": {
+          "entityName": "College",
+          "schema": {
+            "$ref": "#/backend/entities/College"
+          },
+          "description": "Documents in this collection indicate college privileges for the corresponding user ID. The existence of a document implies the user is a college.",
+          "params": [
+            {
+              "name": "uid",
+              "description": "The Firebase UID of the college user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_industry/{uid}",
+        "definition": {
+          "entityName": "Industry",
+          "schema": {
+            "$ref": "#/backend/entities/Industry"
+          },
+          "description": "Documents in this collection indicate industry privileges for the corresponding user ID. The existence of a document implies the user is an industry.",
+          "params": [
+            {
+              "name": "uid",
+              "description": "The Firebase UID of the industry user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the eStores WorkHub Pay Portal, focusing on secure authentication, role-based access control, and data integrity. To ensure Authorization Independence (CRITICAL), avoid hierarchical authorization dependencies (`get()`), and enable simple, robust security rules, the design incorporates denormalization. This approach supports atomic operations (transactions/batches) and improves debuggability. It uses path-based ownership where applicable and a membership map approach for collaborative data. The structure is segregated to ensure all documents within a collection share the same security requirements. This makes the rules simpler and easier to manage.\n\nThe structure also maintains data clarity and predictability through explicit state modeling and predictable schema. It uses a single `status` field for clarity and enforces strict naming conventions for consistency. The absence of dynamic keys contributes to a more robust and maintainable database.\n\nSpecifically:\n\n1.  **/admins/{adminId}**: Stores admin user profiles.\n2.  **/super_admins/{superAdminId}**: Stores super admin user profiles.\n3.  **/employees/{employeeId}**: Stores employee profiles. Includes denormalized fields if certain employee data needs to be accessed quickly without additional reads.\n4.  **/colleges/{collegeId}**: Stores college profiles.\n5.  **/industries/{industryId}**: Stores industry profiles.\n6.  **/roles_admin/{uid}**: Documents in this collection indicate admin privileges for the corresponding user ID. Existence implies admin role.  This helps facilitate secure list operations.\n7.  **/roles_super_admin/{uid}**: Documents in this collection indicate super admin privileges.\n8.  **/roles_employee/{uid}**: Documents in this collection indicate employee privileges.\n9.  **/roles_college/{uid}**: Documents in this collection indicate college privileges.\n10. **/roles_industry/{uid}**: Documents in this collection indicate industry privileges.\n\nThis structure provides a clear separation of concerns, simplifies security rules, supports atomic operations, and ensures scalability for the eStores WorkHub Pay Portal application. The segregation of user types into separate collections and the use of role-based collections will assist in applying correct rule sets."
+  }
+}

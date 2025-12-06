@@ -1,0 +1,340 @@
+/**
+ * @file firestore.rules
+ * @description Security rules for the eStores WorkHub Pay Portal application.
+ *
+ * ## Core Philosophy
+ * This ruleset enforces a strict Role-Based Access Control (RBAC) model combined with user ownership.
+ * Access is determined by a user's role (e.g., Employee, Admin, SuperAdmin), which is defined
+ * by the existence of a document in a corresponding `roles_*` collection. For personal data, a
+ * strict user-ownership model is applied, ensuring users can only access and manage their own information.
+ *
+ * ## Data Structure
+ * - User profiles are stored in top-level collections segregated by type (e.g., `/employees/{employeeId}`).
+ * - Role assignments are managed in separate top-level collections (e.g., `/roles_admin/{uid}`) for fast, secure lookups.
+ * - User-specific data (e.g., attendance, tasks) is stored in subcollections under the corresponding user's profile document (e.g., `/employees/{employeeId}/tasks/{taskId}`).
+ *
+ * ## Key Security Decisions
+ * - **Default Deny**: All operations are denied by default and must be explicitly allowed.
+ * - **No User Enumeration**: Listing users from top-level profile collections (e.g., `/employees`) is disallowed to protect user privacy.
+ * - **Role Management**: Only Super Admins are permitted to manage role assignments (i.e., write to `roles_*` collections).
+ * - **Data Integrity**: On creation, documents must contain an ID field that matches the document's ID in the path, ensuring relational consistency. This ID is immutable.
+ * - **Prototyping Flexibility**: These rules enforce strict authorization (who can access what) but do not validate the specific shape or data types of documents, allowing for rapid front-end development.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // Helper Functions
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns true if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Returns true if the authenticated user's UID matches the provided userId.
+     * Use for create operations or path-based checks.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Returns true if the user is the owner and the document already exists.
+     * Use for update and delete operations to prevent modifying non-existent data.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * Checks if the requesting user has the 'SuperAdmin' role.
+     * This is determined by the existence of their UID in the /roles_super_admin collection.
+     */
+    function isSuperAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
+    }
+
+    /**
+     * Checks if the requesting user has the 'Admin' role.
+     */
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    }
+    
+    /**
+     * Checks if the requesting user is either an Admin or a SuperAdmin.
+     */
+    function isAdminOrSuperAdmin() {
+      return isAdmin() || isSuperAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // User Profile Collections
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Manages admin user profile documents.
+     * @path /admins/{adminId}
+     * @allow (create) A new admin creating their own profile: `auth.uid == adminId`.
+     * @deny (get) An anonymous user trying to read an admin's profile.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /admins/{adminId} {
+      allow get: if isOwner(adminId);
+      allow list: if false;
+      allow create: if isOwner(adminId) && request.resource.data.id == adminId;
+      allow update: if isExistingOwner(adminId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(adminId);
+    }
+
+    /**
+     * @description Manages super admin user profile documents.
+     * @path /super_admins/{superAdminId}
+     * @allow (create) A new super admin creating their own profile: `auth.uid == superAdminId`.
+     * @deny (list) Any user attempting to list all super admins.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /super_admins/{superAdminId} {
+      allow get: if isOwner(superAdminId);
+      allow list: if false;
+      allow create: if isOwner(superAdminId) && request.resource.data.id == superAdminId;
+      allow update: if isExistingOwner(superAdminId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(superAdminId);
+    }
+
+    /**
+     * @description Manages employee user profile documents.
+     * @path /employees/{employeeId}
+     * @allow (create) A new employee creating their own profile: `auth.uid == employeeId`.
+     * @deny (get) Another employee trying to read a colleague's profile.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /employees/{employeeId} {
+      allow get: if isOwner(employeeId);
+      allow list: if false;
+      allow create: if isOwner(employeeId) && request.resource.data.id == employeeId;
+      allow update: if isExistingOwner(employeeId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(employeeId);
+    }
+
+    /**
+     * @description Manages college user profile documents.
+     * @path /colleges/{collegeId}
+     * @allow (create) A new college user creating their own profile: `auth.uid == collegeId`.
+     * @deny (delete) A different college user trying to delete a profile.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /colleges/{collegeId} {
+      allow get: if isOwner(collegeId);
+      allow list: if false;
+      allow create: if isOwner(collegeId) && request.resource.data.id == collegeId;
+      allow update: if isExistingOwner(collegeId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(collegeId);
+    }
+
+    /**
+     * @description Manages industry user profile documents.
+     * @path /industries/{industryId}
+     * @allow (create) A new industry user creating their own profile: `auth.uid == industryId`.
+     * @deny (list) Any user trying to list all industry profiles.
+     * @principle Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /industries/{industryId} {
+      allow get: if isOwner(industryId);
+      allow list: if false;
+      allow create: if isOwner(industryId) && request.resource.data.id == industryId;
+      allow update: if isExistingOwner(industryId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(industryId);
+    }
+
+    // -------------------------------------------------------------------------
+    // User Subcollections
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Manages employee attendance records.
+     * @path /employees/{employeeId}/attendance/{attendanceId}
+     * @allow (create) An employee creating their own attendance record.
+     * @deny (get) An employee trying to read a colleague's attendance.
+     * @principle Enforces document ownership via path hierarchy.
+     */
+    match /employees/{employeeId}/attendance/{attendanceId} {
+      allow get: if isOwner(employeeId);
+      allow list: if isOwner(employeeId);
+      allow create: if isOwner(employeeId) && request.resource.data.employeeId == employeeId;
+      allow update: if isExistingOwner(employeeId) && request.resource.data.employeeId == resource.data.employeeId;
+      allow delete: if isExistingOwner(employeeId);
+    }
+
+    /**
+     * @description Manages tasks assigned to an employee.
+     * @path /employees/{employeeId}/tasks/{taskId}
+     * @allow (list) An employee listing their own tasks.
+     * @deny (update) An employee trying to update a colleague's task.
+     * @principle Enforces document ownership via path hierarchy.
+     */
+    match /employees/{employeeId}/tasks/{taskId} {
+      allow get: if isOwner(employeeId);
+      allow list: if isOwner(employeeId);
+      allow create: if isOwner(employeeId) && request.resource.data.assignedToEmployeeId == employeeId;
+      allow update: if isExistingOwner(employeeId) && request.resource.data.assignedToEmployeeId == resource.data.assignedToEmployeeId;
+      allow delete: if isExistingOwner(employeeId);
+    }
+
+    /**
+     * @description Manages data related to a specific college.
+     * @path /colleges/{collegeId}/collegeData/{collegeDataId}
+     * @allow (create) A college user creating data associated with their own college.
+     * @deny (get) A different college user trying to read another college's data.
+     * @principle Enforces document ownership via path hierarchy.
+     */
+    match /colleges/{collegeId}/collegeData/{collegeDataId} {
+      allow get: if isOwner(collegeId);
+      allow list: if isOwner(collegeId);
+      allow create: if isOwner(collegeId) && request.resource.data.collegeId == collegeId;
+      allow update: if isExistingOwner(collegeId) && request.resource.data.collegeId == resource.data.collegeId;
+      allow delete: if isExistingOwner(collegeId);
+    }
+
+    /**
+     * @description Manages data related to a specific industry.
+     * @path /industries/{industryId}/industryData/{industryDataId}
+     * @allow (create) An industry user creating data for their own industry.
+     * @deny (list) An industry user trying to list data from another industry.
+     * @principle Enforces document ownership via path hierarchy.
+     */
+    match /industries/{industryId}/industryData/{industryDataId} {
+      allow get: if isOwner(industryId);
+      allow list: if isOwner(industryId);
+      allow create: if isOwner(industryId) && request.resource.data.industryId == industryId;
+      allow update: if isExistingOwner(industryId) && request.resource.data.industryId == resource.data.industryId;
+      allow delete: if isExistingOwner(industryId);
+    }
+
+    // -------------------------------------------------------------------------
+    // App-Wide Collections
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Stores messages. Access is highly restricted due to schema limitations.
+     * @path /messages/{messageId}
+     * @allow (create) A signed-in user creating a message, provided they set 'senderId' to their own UID.
+     * @deny (get) Any user reading any message. This is denied until the schema is improved.
+     * @principle Enforces sender identity on create and defaults to secure denial for reads/updates.
+     */
+    match /messages/{messageId} {
+      // CRITICAL: The 'Message' entity is missing UID fields for authorization.
+      // To implement secure read/update access, the schema MUST include fields like:
+      // - senderId (string, UID of the sender)
+      // - receiverId (string, UID of the receiver)
+      // - OR participantIds (array of UIDs for group messages)
+      // The rules below are a secure placeholder.
+      allow get: if false; // TODO: Change to `if request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId`
+      allow list: if false;
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+      allow update: if false; // TODO: Change to `if request.auth.uid == resource.data.senderId`
+      allow delete: if false; // TODO: Change to `if request.auth.uid == resource.data.senderId`
+    }
+
+    /**
+     * @description Stores revenue data, accessible only by admins.
+     * @path /revenue/{revenueId}
+     * @allow (get) An admin or super admin reading revenue data.
+     * @deny (create) A regular employee trying to create a revenue record.
+     * @principle Restricts access to sensitive data based on role.
+     */
+    match /revenue/{revenueId} {
+      allow get: if isAdminOrSuperAdmin();
+      allow list: if isAdminOrSuperAdmin();
+      allow create: if isAdminOrSuperAdmin();
+      allow update: if isAdminOrSuperAdmin() && resource != null;
+      allow delete: if isAdminOrSuperAdmin() && resource != null;
+    }
+
+    // -------------------------------------------------------------------------
+    // Role Management Collections
+    // These collections control user permissions throughout the app.
+    // Only Super Admins can modify roles.
+    // -------------------------------------------------------------------------
+
+    /**
+     * @description Defines which users are Admins. Document ID must be the user's UID.
+     * @path /roles_admin/{uid}
+     * @allow (create) A Super Admin assigning the Admin role to a user.
+     * @deny (create) A user trying to make themselves an Admin.
+     * @principle Centralizes role management under the highest privilege level.
+     */
+    match /roles_admin/{uid} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    /**
+     * @description Defines which users are Super Admins.
+     * @path /roles_super_admin/{uid}
+     * @allow (get) Any signed-in user checking if another user is a Super Admin.
+     * @deny (create) An existing Admin trying to promote themselves to Super Admin.
+     * @principle Centralizes role management under the highest privilege level.
+     */
+    match /roles_super_admin/{uid} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+    
+    /**
+     * @description Defines which users are Employees.
+     * @path /roles_employee/{uid}
+     * @allow (create) A Super Admin assigning the Employee role to a user.
+     * @deny (create) A user trying to make themselves an Employee.
+     * @principle Centralizes role management under the highest privilege level.
+     */
+    match /roles_employee/{uid} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    /**
+     * @description Defines which users are Colleges.
+     * @path /roles_college/{uid}
+     * @allow (create) A Super Admin assigning the College role to a user.
+     * @deny (create) A user trying to make themselves a College user.
+     * @principle Centralizes role management under the highest privilege level.
+     */
+    match /roles_college/{uid} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    /**
+     * @description Defines which users are Industries.
+     * @path /roles_industry/{uid}
+     * @allow (create) A Super Admin assigning the Industry role to a user.
+     * @deny (create) A user trying to make themselves an Industry user.
+     * @principle Centralizes role management under the highest privilege level.
+     */
+    match /roles_industry/{uid} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+  }
+}
