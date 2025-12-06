@@ -128,9 +128,11 @@ export function SignupForm() {
                 const roleMapDocRef = doc(db, roleCollectionName, user.uid);
                 setDocumentNonBlocking(roleMapDocRef, { uid: user.uid }, { merge: true });
                 
+                await auth.signOut();
+
                 toast({
                     title: 'Signup Successful',
-                    description: "You've been successfully registered. Redirecting...",
+                    description: "You've been registered. Please log in.",
                 });
                 
                 router.push('/login');
