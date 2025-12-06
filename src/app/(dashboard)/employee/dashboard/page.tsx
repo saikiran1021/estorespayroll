@@ -66,7 +66,7 @@ function AttendanceWidget() {
             });
             setAttendanceStatus(status);
             toast({ title: 'Success', description: `Attendance marked as ${status}.` });
-        } catch (error: any) => {
+        } catch (error: any) {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         }
     };
