@@ -25,7 +25,7 @@ export default function AdminDashboard() {
         <Card>
             <CardHeader>
                 <CardTitle className="text-2xl">
-                    <span className="font-bold text-primary">Welcome,</span> {greeting} {user?.displayName || 'Admin'}!
+                    <span className="font-bold text-yellow-500">Welcome,</span> {greeting} {user?.displayName || 'Admin'}!
                 </CardTitle>
                 <CardDescription>This is your control center. Manage employees, track revenue, and more.</CardDescription>
             </CardHeader>

@@ -2,7 +2,7 @@
 
 import type { User } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { doc, getDoc, DocumentData } from 'firebase/firestore';
+import { doc, getDoc, DocumentData, Firestore } from 'firebase/firestore';
 import { useUser, useFirestore, useAuth as useFirebaseAuth } from '@/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,17 +24,16 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 const publicRoutes = ['/login', '/signup'];
-
-const roleRedirects: { [key: string]: string } = {
-  'Super Admin': '/super-admin/dashboard',
-  'Admin': '/admin/dashboard',
-  'Employee': '/employee/dashboard',
-  'College': '/college/dashboard',
-  'Industry': '/industry/dashboard',
+const roleDashboardMap: Record<string, string> = {
+    'Super Admin': '/super-admin/dashboard',
+    'Admin': '/admin/dashboard',
+    'Employee': '/employee/dashboard',
+    'College': '/college/dashboard',
+    'Industry': '/industry/dashboard',
 };
 
-async function getUserRoleAndData(db: any, uid: string): Promise<{ role: UserRole, data: DocumentData | null }> {
-    const roleCollections = {
+async function getUserRoleAndData(db: Firestore, uid: string): Promise<{ role: UserRole, data: DocumentData | null }> {
+    const roleCollections: Record<string, UserRole> = {
         'roles_super_admin': 'Super Admin',
         'roles_admin': 'Admin',
         'roles_employee': 'Employee',
@@ -42,86 +41,91 @@ async function getUserRoleAndData(db: any, uid: string): Promise<{ role: UserRol
         'roles_industry': 'Industry',
     };
 
-    for (const [collectionName, role] of Object.entries(roleCollections)) {
-        try {
-            const roleDocRef = doc(db, collectionName, uid);
-            const roleDoc = await getDoc(roleDocRef);
-            if (roleDoc.exists()) {
-                const profileCollection = collectionName.replace('roles_', '') + 's';
-                const userDocRef = doc(db, profileCollection, uid);
-                const userDoc = await getDoc(userDocRef);
-                return { role: role as UserRole, data: userDoc.exists() ? userDoc.data() : null };
-            }
-        } catch (error) {
-            console.error(`Error checking role in ${collectionName}:`, error);
-            // Continue to the next role check
+    for (const collectionName of Object.keys(roleCollections)) {
+        const roleDocRef = doc(db, collectionName, uid);
+        const roleDocSnap = await getDoc(roleDocRef);
+        if (roleDocSnap.exists()) {
+            const role = roleCollections[collectionName];
+            const profileCollection = collectionName.replace('roles_', '') + 's';
+            const userDocRef = doc(db, profileCollection, uid);
+            const userDocSnap = await getDoc(userDocRef);
+            return {
+                role,
+                data: userDocSnap.exists() ? userDocSnap.data() : null,
+            };
         }
     }
+
     return { role: null, data: null };
 }
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const { user: firebaseUser, isUserLoading } = useUser();
+  const { user, isUserLoading } = useUser();
   const db = useFirestore();
   const auth = useFirebaseAuth();
-
-  const [userRole, setUserRole] = useState<UserRole>(null);
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [isRedirecting, setIsRedirecting] = useState(false);
-
   const router = useRouter();
   const pathname = usePathname();
 
+  const [userRole, setUserRole] = useState<UserRole>(null);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const handleAuthChange = async () => {
-      setAuthLoading(true);
-      
-      if (isUserLoading) {
-        return; 
-      }
-      
-      if (firebaseUser) {
-        const { role, data } = await getUserRoleAndData(db, firebaseUser.uid);
+    // If Firebase is still checking the user, we wait.
+    if (isUserLoading) {
+        setLoading(true);
+        return;
+    }
+
+    // If there is no user logged in...
+    if (!user) {
+        setUserRole(null);
+        setEmployeeId(null);
+        // And they are not on a public route, redirect them to login.
+        if (!publicRoutes.includes(pathname)) {
+            router.replace('/login');
+        } else {
+            setLoading(false);
+        }
+        return;
+    }
+
+    // If there IS a user logged in...
+    let isMounted = true;
+    getUserRoleAndData(db, user.uid).then(({ role, data }) => {
+        if (!isMounted) return;
+
         setUserRole(role);
-        setEmployeeId(data?.employeeId || null);
-        
+        setEmployeeId(data?.employeeId ?? null);
+
         const isPublicRoute = publicRoutes.includes(pathname);
         
         if (role) {
-          const targetPath = roleRedirects[role as keyof typeof roleRedirects];
-          if (isPublicRoute) {
-            setIsRedirecting(true);
-            router.replace(targetPath);
-            return;
-          }
+            // User has a valid role. Get their target dashboard.
+            const targetPath = roleDashboardMap[role];
+            // If they are on a public route (like /login), redirect them to their dashboard.
+            if (isPublicRoute) {
+                router.replace(targetPath);
+            } else {
+                setLoading(false);
+            }
         } else {
-          // User exists in Auth but not in a role collection, log them out.
-          await auth.signOut();
-          if (!isPublicRoute) {
-            setIsRedirecting(true);
-            router.replace('/login');
-            return;
-          }
+            // User is authenticated with Firebase but has NO role in Firestore.
+            // This is an invalid state, so log them out and send to login.
+            auth.signOut();
+            if (!isPublicRoute) {
+                router.replace('/login');
+            } else {
+                 setLoading(false);
+            }
         }
-      } else {
-        setUserRole(null);
-        setEmployeeId(null);
-        if (!publicRoutes.includes(pathname)) {
-            setIsRedirecting(true);
-            router.replace('/login');
-            return;
-        }
-      }
-      setAuthLoading(false);
-      setIsRedirecting(false);
+    });
+
+    return () => {
+        isMounted = false;
     };
+}, [user, isUserLoading, pathname, db, auth, router]);
 
-    handleAuthChange();
-  }, [firebaseUser, isUserLoading, pathname, db, auth, router]);
-
-  const loading = isUserLoading || authLoading || isRedirecting;
-  
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -137,7 +141,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user: firebaseUser, userRole, loading: authLoading, employeeId }}>
+    <AuthContext.Provider value={{ user, userRole, loading, employeeId }}>
       {children}
     </AuthContext.Provider>
   );
