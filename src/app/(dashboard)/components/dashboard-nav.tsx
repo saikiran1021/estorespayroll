@@ -63,6 +63,8 @@ export default function DashboardNav() {
   const { userRole } = useAuthContext();
   const pathname = usePathname();
 
+  if (!userRole) return null;
+
   const filteredNavItems = navItems.filter(item => item.roles.includes(userRole));
 
   return (
