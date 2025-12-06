@@ -119,13 +119,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  if (!publicRoutes.includes(pathname) && !firebaseUser) {
-    return null; // Don't render protected pages if user is not logged in
-  }
-
-  if(publicRoutes.includes(pathname) && firebaseUser){
-    return null; // Don't render login/signup if user is logged in
-  }
+  // This logic was causing the blank page.
+  // It prevented rendering children during the redirect phase after login.
+  // We should render children and let the useEffect handle the redirect.
+  // if (!publicRoutes.includes(pathname) && !firebaseUser) {
+  //   return null; // Don't render protected pages if user is not logged in
+  // }
+  // if(publicRoutes.includes(pathname) && firebaseUser){
+  //   return null; // Don't render login/signup if user is logged in
+  // }
 
 
   return (
