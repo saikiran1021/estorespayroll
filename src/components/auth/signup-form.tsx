@@ -24,8 +24,8 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateProfile, onAuthStateChanged, type User } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { updateProfile, onAuthStateChanged, type User, type AuthError } from 'firebase/auth';
+import { doc } from 'firebase/firestore';
 import { useAuth, useFirestore, setDocumentNonBlocking, initiateEmailSignUp } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -158,7 +158,23 @@ export function SignupForm() {
     }
     
     setIsSubmitting(true);
-    initiateEmailSignUp(auth, values.email, values.password);
+    initiateEmailSignUp(auth, values.email, values.password, (error: AuthError) => {
+        setIsLoading(false);
+        setIsSubmitting(false);
+        if (error.code === 'auth/email-already-in-use') {
+            toast({
+                variant: 'destructive',
+                title: 'Signup Failed',
+                description: 'This email address is already registered. Please sign in.',
+            });
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Signup Failed',
+                description: error.message || 'An unexpected error occurred.',
+            });
+        }
+    });
   }
 
   return (
