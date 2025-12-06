@@ -179,28 +179,7 @@ export function SignupForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {selectedRole === 'Employee' || selectedRole === 'Admin' || selectedRole === 'Super Admin' ? (
-            <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="name" render={({ field }) => (
-                    <FormItem><FormLabel>Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>
-                )}/>
-                <FormField control={form.control} name="surname" render={({ field }) => (
-                    <FormItem><FormLabel>Surname</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>
-                )}/>
-            </div>
-        ) : (
-             <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem><FormLabel>{selectedRole} Name</FormLabel><FormControl><Input placeholder={`e.g., ${selectedRole === 'College' ? 'State University' : 'Tech Corp'}`} {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
-        )}
-
-        <FormField control={form.control} name="phone" render={({ field }) => (
-            <FormItem><FormLabel>Phone</FormLabel><FormControl><Input placeholder="123-456-7890" {...field} /></FormControl><FormMessage /></FormItem>
-        )}/>
-        <FormField control={form.control} name="email" render={({ field }) => (
-            <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="john.doe@estores.com" {...field} /></FormControl><FormMessage /></FormItem>
-        )}/>
-         <FormField
+        <FormField
           control={form.control}
           name="role"
           render={({ field }) => (
@@ -224,6 +203,27 @@ export function SignupForm() {
             </FormItem>
           )}
         />
+        {selectedRole === 'Employee' || selectedRole === 'Admin' || selectedRole === 'Super Admin' ? (
+            <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="name" render={({ field }) => (
+                    <FormItem><FormLabel>Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <FormField control={form.control} name="surname" render={({ field }) => (
+                    <FormItem><FormLabel>Surname</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+            </div>
+        ) : (
+             <FormField control={form.control} name="name" render={({ field }) => (
+                <FormItem><FormLabel>{selectedRole} Name</FormLabel><FormControl><Input placeholder={`e.g., ${selectedRole === 'College' ? 'State University' : 'Tech Corp'}`} {...field} /></FormControl><FormMessage /></FormItem>
+            )}/>
+        )}
+
+        <FormField control={form.control} name="phone" render={({ field }) => (
+            <FormItem><FormLabel>Phone</FormLabel><FormControl><Input placeholder="123-456-7890" {...field} /></FormControl><FormMessage /></FormItem>
+        )}/>
+        <FormField control={form.control} name="email" render={({ field }) => (
+            <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="john.doe@estores.com" {...field} /></FormControl><FormMessage /></FormItem>
+        )}/>
         <FormField control={form.control} name="password" render={({ field }) => (
             <FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
         )}/>
