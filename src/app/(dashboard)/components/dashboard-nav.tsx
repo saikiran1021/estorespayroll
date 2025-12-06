@@ -48,8 +48,8 @@ const navItems: NavItem[] = [
   { href: '/admin/mailbox', label: 'Mailbox', icon: Mail, roles: ['Admin'] },
   
   // Universal for Admin & Employee
-  { href: '/industry/dashboard', label: 'Industry Data', icon: Building, roles: ['Admin', 'Employee'] },
-  { href: '/college/dashboard', label: 'College Data', icon: GraduationCap, roles: ['Admin', 'Employee'] },
+  { href: '/industry/data', label: 'Industry Data', icon: Building, roles: ['Admin', 'Employee'] },
+  { href: '/college/data', label: 'College Data', icon: GraduationCap, roles: ['Admin', 'Employee'] },
 
   // Employee
   { href: '/employee/documents', label: 'Documents', icon: FileText, roles: ['Employee'] },
