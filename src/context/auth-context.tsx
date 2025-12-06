@@ -33,19 +33,18 @@ const roleDashboardMap: Record<string, string> = {
 };
 
 async function getUserRoleAndData(db: Firestore, uid: string): Promise<{ role: UserRole, data: DocumentData | null }> {
-    const roleCollections: Record<string, UserRole> = {
-        'roles_super_admin': 'Super Admin',
-        'roles_admin': 'Admin',
-        'roles_employee': 'Employee',
-        'roles_college': 'College',
-        'roles_industry': 'Industry',
-    };
+    const roleCollections: [string, UserRole][] = [
+        ['roles_super_admin', 'Super Admin'],
+        ['roles_admin', 'Admin'],
+        ['roles_employee', 'Employee'],
+        ['roles_college', 'College'],
+        ['roles_industry', 'Industry'],
+    ];
 
-    for (const collectionName of Object.keys(roleCollections)) {
+    for (const [collectionName, role] of roleCollections) {
         const roleDocRef = doc(db, collectionName, uid);
         const roleDocSnap = await getDoc(roleDocRef);
         if (roleDocSnap.exists()) {
-            const role = roleCollections[collectionName];
             const profileCollection = collectionName.replace('roles_', '') + 's';
             const userDocRef = doc(db, profileCollection, uid);
             const userDocSnap = await getDoc(userDocRef);
@@ -66,67 +65,57 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [userRole, setUserRole] = useState<UserRole>(null);
-  const [employeeId, setEmployeeId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authContextValue, setAuthContextValue] = useState<AuthContextType>({
+    user: null,
+    userRole: null,
+    loading: true,
+    employeeId: null,
+  });
 
   useEffect(() => {
-    // If Firebase is still checking the user, we wait.
+    // This effect runs when Firebase user state or path changes.
     if (isUserLoading) {
-        setLoading(true);
+        setAuthContextValue(prev => ({ ...prev, loading: true }));
         return;
     }
 
-    // If there is no user logged in...
-    if (!user) {
-        setUserRole(null);
-        setEmployeeId(null);
-        // And they are not on a public route, redirect them to login.
-        if (!publicRoutes.includes(pathname)) {
+    const isPublicRoute = publicRoutes.includes(pathname);
+
+    if (user) {
+        // User is logged in.
+        getUserRoleAndData(db, user.uid).then(({ role, data }) => {
+            const newContext: AuthContextType = {
+                user: user,
+                userRole: role,
+                employeeId: data?.employeeId ?? null,
+                loading: false
+            };
+            setAuthContextValue(newContext);
+
+            if (role) {
+                const targetDashboard = roleDashboardMap[role];
+                // If on a public page (like /login), redirect to the correct dashboard.
+                if (isPublicRoute) {
+                    router.replace(targetDashboard);
+                }
+            } else {
+                // Logged in but no role found, this is an invalid state.
+                auth.signOut();
+                if (!isPublicRoute) {
+                    router.replace('/login');
+                }
+            }
+        });
+    } else {
+        // No user is logged in.
+        setAuthContextValue({ user: null, userRole: null, employeeId: null, loading: false });
+        if (!isPublicRoute) {
             router.replace('/login');
-        } else {
-            setLoading(false);
         }
-        return;
     }
+  }, [user, isUserLoading, pathname, db, auth, router]);
 
-    // If there IS a user logged in...
-    let isMounted = true;
-    getUserRoleAndData(db, user.uid).then(({ role, data }) => {
-        if (!isMounted) return;
-
-        setUserRole(role);
-        setEmployeeId(data?.employeeId ?? null);
-
-        const isPublicRoute = publicRoutes.includes(pathname);
-        
-        if (role) {
-            // User has a valid role. Get their target dashboard.
-            const targetPath = roleDashboardMap[role];
-            // If they are on a public route (like /login), redirect them to their dashboard.
-            if (isPublicRoute) {
-                router.replace(targetPath);
-            } else {
-                setLoading(false);
-            }
-        } else {
-            // User is authenticated with Firebase but has NO role in Firestore.
-            // This is an invalid state, so log them out and send to login.
-            auth.signOut();
-            if (!isPublicRoute) {
-                router.replace('/login');
-            } else {
-                 setLoading(false);
-            }
-        }
-    });
-
-    return () => {
-        isMounted = false;
-    };
-}, [user, isUserLoading, pathname, db, auth, router]);
-
-  if (loading) {
+  if (authContextValue.loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -141,17 +130,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, userRole, loading, employeeId }}>
+    <AuthContext.Provider value={authContextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuthContext = () => useContext(AuthContext);
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+export const useAuthContext = () => {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuthContext must be used within an AuthProvider');
+    }
+    return context;
 };
