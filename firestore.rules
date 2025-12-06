@@ -16,7 +16,7 @@
  * ## Key Security Decisions
  * - **Default Deny**: All operations are denied by default and must be explicitly allowed.
  * - **No User Enumeration**: Listing users from top-level profile collections (e.g., `/employees`) is disallowed to protect user privacy.
- * - **Role Management**: Only Super Admins are permitted to manage role assignments (i.e., write to `roles_*` collections).
+ * - **Role Management**: Only Super Admins are permitted to manage role assignments (i.e., write to `roles_*` collections), except for an employee creating their own role on signup.
  * - **Data Integrity**: On creation, documents must contain an ID field that matches the document's ID in the path, ensuring relational consistency. This ID is immutable.
  * - **Prototyping Flexibility**: These rules enforce strict authorization (who can access what) but do not validate the specific shape or data types of documents, allowing for rapid front-end development.
  */
@@ -259,7 +259,6 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
     // Role Management Collections
     // These collections control user permissions throughout the app.
-    // Only Super Admins can modify roles.
     // -------------------------------------------------------------------------
 
     /**
@@ -295,14 +294,14 @@ service cloud.firestore {
     /**
      * @description Defines which users are Employees.
      * @path /roles_employee/{uid}
-     * @allow (create) A Super Admin assigning the Employee role to a user.
-     * @deny (create) A user trying to make themselves an Employee.
-     * @principle Centralizes role management under the highest privilege level.
+     * @allow (create) An employee creating their own role on signup.
+     * @deny (create) A user trying to make another user an Employee.
+     * @principle Allows self-signup for the default role, but otherwise centralizes management.
      */
     match /roles_employee/{uid} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isSuperAdmin();
+      allow create: if isOwner(uid) || isSuperAdmin();
       allow update: if isSuperAdmin();
       allow delete: if isSuperAdmin();
     }

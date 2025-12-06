@@ -13,13 +13,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -37,16 +30,10 @@ const formSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
-  role: z.enum(['Employee', 'Admin', 'Super Admin', 'College', 'Industry']),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword'],
 });
-
-const restrictedEmails = {
-    'Super Admin': ['super1@estores.com', 'super2@estores.com', 'superadmin@estores.com'],
-    'Admin': ['admin1@estores.com', 'admin2@estores.com', 'admin3@estores.com', 'admin4@estores.com', 'admin@estores.com'],
-}
 
 function generateEmployeeId(name: string, surname: string) {
     const initials = (name.charAt(0) + surname.charAt(0)).toUpperCase();
@@ -72,7 +59,6 @@ export function SignupForm() {
       email: '',
       password: '',
       confirmPassword: '',
-      role: 'Employee',
     },
   });
   
@@ -85,36 +71,23 @@ export function SignupForm() {
                 await updateProfile(user, {
                     displayName: `${values.name} ${values.surname}`
                 });
+                
+                const role = 'Employee';
+                const employeeId = generateEmployeeId(values.name, values.surname);
 
-                const employeeId = values.role === 'Employee' ? generateEmployeeId(values.name, values.surname) : null;
-
-                const collections: Record<string, string> = {
-                    'Admin': 'admins',
-                    'Super Admin': 'super_admins',
-                    'Employee': 'employees',
-                    'College': 'colleges',
-                    'Industry': 'industries',
-                };
-                const roleCollection = collections[values.role];
-                const roleDocRef = doc(db, roleCollection, user.uid);
-
-                const roleData: any = {
+                const employeeDocRef = doc(db, 'employees', user.uid);
+                const employeeData = {
                     id: user.uid,
                     name: values.name,
                     surname: values.surname,
                     phone: values.phone,
                     email: values.email,
                     lastLogin: new Date().toISOString(),
+                    employeeId: employeeId,
                 };
+                setDocumentNonBlocking(employeeDocRef, employeeData, { merge: true });
 
-                if (values.role === 'Employee' && employeeId) {
-                    roleData.employeeId = employeeId;
-                }
-
-                setDocumentNonBlocking(roleDocRef, roleData, { merge: true });
-
-                const roleMapCollection = `roles_${values.role.toLowerCase().replace(' ', '_')}`;
-                const roleMapDocRef = doc(db, roleMapCollection, user.uid);
+                const roleMapDocRef = doc(db, 'roles_employee', user.uid);
                 setDocumentNonBlocking(roleMapDocRef, { uid: user.uid }, { merge: true });
                 
                 toast({
@@ -142,22 +115,8 @@ export function SignupForm() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-
-    const allowedSuperAdmins = restrictedEmails['Super Admin'];
-    const allowedAdmins = restrictedEmails['Admin'];
-    
-    if (values.role === 'Super Admin' && !allowedSuperAdmins.includes(values.email)) {
-        toast({ variant: 'destructive', title: 'Signup Failed', description: 'This email is not authorized for Super Admin registration.' });
-        setIsLoading(false);
-        return;
-    }
-    if (values.role === 'Admin' && !allowedAdmins.includes(values.email)) {
-        toast({ variant: 'destructive', title: 'Signup Failed', description: 'This email is not authorized for Admin registration.' });
-        setIsLoading(false);
-        return;
-    }
-    
     setIsSubmitting(true);
+    
     initiateEmailSignUp(auth, values.email, values.password, (error: AuthError) => {
         setIsLoading(false);
         setIsSubmitting(false);
@@ -200,24 +159,9 @@ export function SignupForm() {
         <FormField control={form.control} name="confirmPassword" render={({ field }) => (
             <FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
         )}/>
-        <FormField control={form.control} name="role" render={({ field }) => (
-            <FormItem>
-              <FormLabel>Role</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl>
-                <SelectContent>
-                  <SelectItem value="Employee">Employee</SelectItem>
-                  <SelectItem value="Admin">Admin</SelectItem>
-                  <SelectItem value="Super Admin">Super Admin</SelectItem>
-                  <SelectItem value="College">College</SelectItem>
-                  <SelectItem value="Industry">Industry</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-        )}/>
+        
         <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
-          {isLoading ? <Loader2 className="animate-spin" /> : 'Sign Up'}
+          {isLoading ? <Loader2 className="animate-spin" /> : 'Sign Up as Employee'}
         </Button>
         <div className="text-center text-sm">
           Already have an account?{' '}
