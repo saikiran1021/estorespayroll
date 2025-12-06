@@ -10,6 +10,7 @@ import { doc, setDoc, getDoc, collection, query, where, getDocs, Timestamp } fro
 import { useFirestore, useUser } from '@/firebase';
 import { useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { LogoutButton } from '../components/logout-button';
 
 function AttendanceWidget() {
     const { toast } = useToast();
@@ -106,8 +107,13 @@ export default function EmployeeDashboard() {
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Welcome, {user?.displayName || user?.email}!</CardTitle>
-          <CardDescription>This is your personal dashboard.</CardDescription>
+          <div className='flex justify-between items-start'>
+            <div>
+                <CardTitle>Welcome, {user?.displayName || user?.email}!</CardTitle>
+                <CardDescription>This is your personal dashboard.</CardDescription>
+            </div>
+            <LogoutButton />
+          </div>
         </CardHeader>
         <CardContent>
             {employeeId && (
