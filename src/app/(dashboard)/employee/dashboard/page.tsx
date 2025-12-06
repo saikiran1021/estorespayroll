@@ -10,6 +10,7 @@ import { doc, setDoc, getDoc, collection, query, where, getDocs, Timestamp } fro
 import { useFirestore, useUser } from '@/firebase';
 import { useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { LogoutButton } from '../../components/logout-button';
 
 
 function AttendanceWidget() {
@@ -112,6 +113,7 @@ export default function EmployeeDashboard() {
                 <CardTitle>Welcome, {user?.displayName || user?.email}!</CardTitle>
                 <CardDescription>This is your personal dashboard.</CardDescription>
             </div>
+            <LogoutButton variant="outline" className="w-auto">Logout</LogoutButton>
           </div>
         </CardHeader>
         <CardContent>
