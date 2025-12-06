@@ -2,22 +2,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const protectedRoutes = [
-    '/admin/dashboard',
-    '/employee/dashboard',
-    '/super-admin/dashboard',
-    '/college/dashboard',
-    '/industry/dashboard',
+    '/admin',
+    '/employee',
+    '/super-admin',
+    '/college',
+    '/industry',
 ];
 
 const authRoutes = ['/login', '/signup'];
-
-const roleRoutes: Record<string, string[]> = {
-    'Admin': ['/admin/dashboard', '/industry/dashboard'],
-    'Employee': ['/employee/dashboard', '/college/dashboard', '/industry/dashboard'],
-    'Super Admin': ['/super-admin/dashboard'],
-    'College': ['/college/dashboard'],
-    'Industry': ['/industry/dashboard'],
-}
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
@@ -39,11 +31,11 @@ export function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/admin/dashboard/:path*',
-        '/employee/dashboard/:path*',
-        '/super-admin/dashboard/:path*',
-        '/college/dashboard/:path*',
-        '/industry/dashboard/:path*',
+        '/admin/:path*',
+        '/employee/:path*',
+        '/super-admin/:path*',
+        '/college/:path*',
+        '/industry/:path*',
         '/login',
         '/signup',
     ],

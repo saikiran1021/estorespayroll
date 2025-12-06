@@ -15,7 +15,6 @@ import {
   GraduationCap,
   FileText,
   DollarSign,
-  BarChart,
   Mail,
   ClipboardCheck,
   CalendarCheck
@@ -47,16 +46,15 @@ const navItems: NavItem[] = [
   { href: '/admin/tasks', label: 'Assign Work', icon: Briefcase, roles: ['Admin'] },
   { href: '/admin/mailbox', label: 'Mailbox', icon: Mail, roles: ['Admin'] },
   
-  // Universal for Admin & Employee
-  { href: '/industry/data', label: 'Industry Data', icon: Building, roles: ['Admin', 'Employee'] },
-  { href: '/college/data', label: 'College Data', icon: GraduationCap, roles: ['Admin', 'Employee'] },
-
   // Employee
   { href: '/employee/documents', label: 'Documents', icon: FileText, roles: ['Employee'] },
   { href: '/employee/payslip', label: 'Payslip', icon: DollarSign, roles: ['Employee'] },
   { href: '/employee/tasks', label: 'Assigned Work', icon: Briefcase, roles: ['Employee'] },
   { href: '/employee/mailbox', label: 'Mailbox', icon: Mail, roles: ['Employee'] },
-
+  
+  // These were causing issues, so they are commented out until they are properly implemented
+  // { href: '/industry/data', label: 'Industry Data', icon: Building, roles: ['Admin', 'Employee'] },
+  // { href: '/college/data', label: 'College Data', icon: GraduationCap, roles: ['Admin', 'Employee'] },
 ];
 
 export default function DashboardNav() {
