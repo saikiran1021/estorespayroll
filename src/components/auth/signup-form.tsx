@@ -22,11 +22,11 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { updateProfile, onAuthStateChanged, type User } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import { auth, db, setDocumentNonBlocking, initiateEmailSignUp } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -58,6 +58,8 @@ export function SignupForm() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -71,11 +73,74 @@ export function SignupForm() {
       role: 'Employee',
     },
   });
+  
+  const values = form.getValues();
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
+        if (user && isSubmitting) {
+            try {
+                await updateProfile(user, {
+                    displayName: `${values.name} ${values.surname}`
+                });
+
+                const employeeId = values.role === 'Employee' ? generateEmployeeId(values.name, values.surname) : null;
+
+                const collections: Record<string, string> = {
+                    'Admin': 'admins',
+                    'Super Admin': 'super_admins',
+                    'Employee': 'employees',
+                    'College': 'colleges',
+                    'Industry': 'industries',
+                };
+                const roleCollection = collections[values.role];
+                const roleDocRef = doc(db, roleCollection, user.uid);
+
+                const roleData: any = {
+                    id: user.uid,
+                    name: values.name,
+                    surname: values.surname,
+                    phone: values.phone,
+                    email: values.email,
+                    lastLogin: new Date().toISOString(),
+                };
+
+                if (values.role === 'Employee' && employeeId) {
+                    roleData.employeeId = employeeId;
+                }
+
+                setDocumentNonBlocking(roleDocRef, roleData, { merge: true });
+
+                const roleMapCollection = `roles_${values.role.toLowerCase().replace(' ', '_')}`;
+                const roleMapDocRef = doc(db, roleMapCollection, user.uid);
+                setDocumentNonBlocking(roleMapDocRef, { uid: user.uid }, { merge: true });
+                
+                toast({
+                    title: 'Signup Successful',
+                    description: "You've been successfully registered. Redirecting...",
+                });
+                
+                router.push('/login');
+
+            } catch (error: any) {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Signup Failed',
+                    description: error.message || 'An unexpected error occurred.',
+                });
+            } finally {
+                setIsLoading(false);
+                setIsSubmitting(false);
+            }
+        }
+    });
+
+    return () => unsubscribe();
+  }, [isSubmitting, values, router, toast]);
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
 
-    // Role restrictions
     const allowedSuperAdmins = restrictedEmails['Super Admin'];
     const allowedAdmins = restrictedEmails['Admin'];
     
@@ -89,63 +154,9 @@ export function SignupForm() {
         setIsLoading(false);
         return;
     }
-
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-
-      await updateProfile(user, {
-        displayName: `${values.name} ${values.surname}`
-      });
-      
-      const employeeId = values.role === 'Employee' ? generateEmployeeId(values.name, values.surname) : null;
-      
-      const collections: Record<string, string> = {
-          'Admin': 'admins',
-          'Super Admin': 'super_admins',
-          'Employee': 'employees',
-          'College': 'colleges',
-          'Industry': 'industries',
-      };
-      const roleCollection = collections[values.role];
-      const roleDocRef = doc(db, roleCollection, user.uid);
-
-      const roleData: any = {
-        id: user.uid,
-        name: values.name,
-        surname: values.surname,
-        phone: values.phone,
-        email: values.email,
-        lastLogin: new Date().toISOString(),
-      };
-
-      if (values.role === 'Employee' && employeeId) {
-        roleData.employeeId = employeeId;
-      }
-      
-      await setDoc(roleDocRef, roleData);
-      
-      // Also set the role mapping
-      const roleMapCollection = `roles_${values.role.toLowerCase().replace(' ', '_')}`;
-      const roleMapDocRef = doc(db, roleMapCollection, user.uid);
-      await setDoc(roleMapDocRef, { uid: user.uid });
-      
-      toast({
-        title: 'Signup Successful',
-        description: "You've been successfully registered. Redirecting...",
-      });
-      
-      router.push('/login');
-
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Signup Failed',
-        description: error.message || 'An unexpected error occurred.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    
+    setIsSubmitting(true);
+    initiateEmailSignUp(auth, values.email, values.password);
   }
 
   return (

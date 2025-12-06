@@ -23,3 +23,5 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 export { app, auth, db };
+export * from '@/firebase/non-blocking-updates';
+export * from '@/firebase/non-blocking-login';
