@@ -13,8 +13,6 @@ const demoCredentials = [
     { role: 'Employee', email: 'employee@estores.com', password: 'password123' },
     { role: 'Admin', email: 'admin@estores.com', password: 'admin123' },
     { role: 'Super Admin', email: 'superadmin@estores.com', password: 'super123' },
-    { role: 'College', email: 'college@estores.com', password: 'college123' },
-    { role: 'Industry', email: 'industry@estores.com', password: 'industry123' },
 ]
 
 export default function LoginPage() {
