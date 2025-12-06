@@ -4,7 +4,7 @@ import type { User } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, DocumentData } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -34,6 +34,27 @@ const roleRedirects: { [key: string]: string } = {
   'Industry': '/industry/dashboard',
 };
 
+async function getUserRoleAndData(uid: string): Promise<{ role: UserRole, data: DocumentData | null }> {
+    const roleCollections = {
+        'roles_super_admin': 'Super Admin',
+        'roles_admin': 'Admin',
+        'roles_employee': 'Employee',
+        'roles_college': 'College',
+        'roles_industry': 'Industry',
+    };
+
+    for (const [collectionName, role] of Object.entries(roleCollections)) {
+        const roleDocRef = doc(db, collectionName, uid);
+        const roleDoc = await getDoc(roleDocRef);
+        if (roleDoc.exists()) {
+            const profileCollection = collectionName.replace('roles_', '') + 's';
+            const userDocRef = doc(db, profileCollection, uid);
+            const userDoc = await getDoc(userDocRef);
+            return { role: role as UserRole, data: userDoc.exists() ? userDoc.data() : null };
+        }
+    }
+    return { role: null, data: null };
+}
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -46,21 +67,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
+        const { role, data } = await getUserRoleAndData(firebaseUser.uid);
+        if (role && data) {
           setUser(firebaseUser);
-          setUserRole(userData.role);
-          setEmployeeId(userData.employeeId || null);
+          setUserRole(role);
+          setEmployeeId(data.employeeId || null);
           
-          const targetPath = roleRedirects[userData.role as keyof typeof roleRedirects];
+          const targetPath = roleRedirects[role as keyof typeof roleRedirects];
           if(publicRoutes.includes(pathname)){
             router.push(targetPath || '/login');
           }
-
         } else {
-          // User exists in Auth but not in Firestore, log them out.
+          // User exists in Auth but not in a role collection, log them out.
           await auth.signOut();
           setUser(null);
           setUserRole(null);

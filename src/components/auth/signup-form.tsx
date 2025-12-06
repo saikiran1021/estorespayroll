@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
@@ -44,8 +44,8 @@ const formSchema = z.object({
 });
 
 const restrictedEmails = {
-    'Super Admin': ['super1@estores.com', 'super2@estores.com'],
-    'Admin': ['admin1@estores.com', 'admin2@estores.com', 'admin3@estores.com', 'admin4@estores.com'],
+    'Super Admin': ['super1@estores.com', 'super2@estores.com', 'superadmin@estores.com'],
+    'Admin': ['admin1@estores.com', 'admin2@estores.com', 'admin3@estores.com', 'admin4@estores.com', 'admin@estores.com'],
 }
 
 function generateEmployeeId(name: string, surname: string) {
@@ -94,20 +94,41 @@ export function SignupForm() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      let employeeId = null;
-      if (values.role === 'Employee') {
-        employeeId = generateEmployeeId(values.name, values.surname);
-      }
+      await updateProfile(user, {
+        displayName: `${values.name} ${values.surname}`
+      });
+      
+      const employeeId = values.role === 'Employee' ? generateEmployeeId(values.name, values.surname) : null;
+      
+      const collections: Record<string, string> = {
+          'Admin': 'admins',
+          'Super Admin': 'super_admins',
+          'Employee': 'employees',
+          'College': 'colleges',
+          'Industry': 'industries',
+      };
+      const roleCollection = collections[values.role];
+      const roleDocRef = doc(db, roleCollection, user.uid);
 
-      await setDoc(doc(db, 'users', user.uid), {
+      const roleData: any = {
+        id: user.uid,
         name: values.name,
         surname: values.surname,
         phone: values.phone,
         email: values.email,
-        role: values.role,
-        employeeId: employeeId,
-        createdAt: new Date(),
-      });
+        lastLogin: new Date().toISOString(),
+      };
+
+      if (values.role === 'Employee' && employeeId) {
+        roleData.employeeId = employeeId;
+      }
+      
+      await setDoc(roleDocRef, roleData);
+      
+      // Also set the role mapping
+      const roleMapCollection = `roles_${values.role.toLowerCase().replace(' ', '_')}`;
+      const roleMapDocRef = doc(db, roleMapCollection, user.uid);
+      await setDoc(roleMapDocRef, { uid: user.uid });
       
       toast({
         title: 'Signup Successful',
