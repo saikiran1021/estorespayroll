@@ -2,9 +2,8 @@
 
 import type { User } from 'firebase/auth';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
 import { doc, getDoc, DocumentData } from 'firebase/firestore';
+import { useUser, useFirestore, useAuth as useFirebaseAuth } from '@/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -34,7 +33,7 @@ const roleRedirects: { [key: string]: string } = {
   'Industry': '/industry/dashboard',
 };
 
-async function getUserRoleAndData(uid: string): Promise<{ role: UserRole, data: DocumentData | null }> {
+async function getUserRoleAndData(db: any, uid: string): Promise<{ role: UserRole, data: DocumentData | null }> {
     const roleCollections = {
         'roles_super_admin': 'Super Admin',
         'roles_admin': 'Admin',
@@ -57,19 +56,26 @@ async function getUserRoleAndData(uid: string): Promise<{ role: UserRole, data: 
 }
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const { user: firebaseUser, isUserLoading } = useUser();
+  const db = useFirestore();
+  const auth = useFirebaseAuth();
+
   const [userRole, setUserRole] = useState<UserRole>(null);
   const [employeeId, setEmployeeId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const handleAuthChange = async () => {
+      if (isUserLoading) {
+        return; 
+      }
+      
       if (firebaseUser) {
-        const { role, data } = await getUserRoleAndData(firebaseUser.uid);
+        const { role, data } = await getUserRoleAndData(db, firebaseUser.uid);
         if (role && data) {
-          setUser(firebaseUser);
           setUserRole(role);
           setEmployeeId(data.employeeId || null);
           
@@ -80,24 +86,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else {
           // User exists in Auth but not in a role collection, log them out.
           await auth.signOut();
-          setUser(null);
           setUserRole(null);
           setEmployeeId(null);
           router.push('/login');
         }
       } else {
-        setUser(null);
         setUserRole(null);
         setEmployeeId(null);
         if (!publicRoutes.includes(pathname)) {
             router.push('/login');
         }
       }
-      setLoading(false);
-    });
+      setAuthLoading(false);
+    };
 
-    return () => unsubscribe();
-  }, [router, pathname]);
+    handleAuthChange();
+  }, [firebaseUser, isUserLoading, router, pathname, db, auth]);
+
+  const loading = isUserLoading || authLoading;
 
   if (loading) {
     return (
@@ -113,20 +119,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  if (!publicRoutes.includes(pathname) && !user) {
+  if (!publicRoutes.includes(pathname) && !firebaseUser) {
     return null; // Don't render protected pages if user is not logged in
   }
 
-  if(publicRoutes.includes(pathname) && user){
+  if(publicRoutes.includes(pathname) && firebaseUser){
     return null; // Don't render login/signup if user is logged in
   }
 
 
   return (
-    <AuthContext.Provider value={{ user, userRole, loading, employeeId }}>
+    <AuthContext.Provider value={{ user: firebaseUser, userRole, loading, employeeId }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuthContext = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

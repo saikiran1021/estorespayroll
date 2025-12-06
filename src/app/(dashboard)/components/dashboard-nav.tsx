@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth, UserRole } from '@/context/auth-context';
+import { useAuthContext, UserRole } from '@/context/auth-context';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -60,7 +60,7 @@ const navItems: NavItem[] = [
 ];
 
 export default function DashboardNav() {
-  const { userRole } = useAuth();
+  const { userRole } = useAuthContext();
   const pathname = usePathname();
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(userRole));

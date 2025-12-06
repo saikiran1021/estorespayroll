@@ -1,10 +1,10 @@
 'use client';
-import { useAuth } from '@/context/auth-context';
+import { useAuthContext } from '@/context/auth-context';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function UserProfile() {
-  const { user, userRole, loading } = useAuth();
+  const { user, userRole, loading } = useAuthContext();
 
   if (loading) {
     return (

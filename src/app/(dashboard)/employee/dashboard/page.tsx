@@ -1,19 +1,20 @@
 'use client';
 
-import { useAuth } from '@/context/auth-context';
+import { useAuthContext } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { doc, setDoc, getDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 
 function AttendanceWidget() {
     const { toast } = useToast();
-    const { user } = useAuth();
+    const { user } = useUser();
+    const db = useFirestore();
     const [attendanceStatus, setAttendanceStatus] = useState<'Present' | 'Absent' | 'Not Marked' | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -46,7 +47,7 @@ function AttendanceWidget() {
         };
 
         fetchAttendance();
-    }, [user, today]);
+    }, [user, today, db]);
 
 
     const markAttendance = async (status: 'Present' | 'Absent') => {
@@ -99,7 +100,7 @@ function AttendanceWidget() {
 
 
 export default function EmployeeDashboard() {
-  const { user, employeeId } = useAuth();
+  const { user, employeeId } = useAuthContext();
   
   return (
     <div className="grid gap-6">

@@ -26,7 +26,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateProfile, onAuthStateChanged, type User } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { auth, db, setDocumentNonBlocking, initiateEmailSignUp } from '@/firebase';
+import { useAuth, useFirestore, setDocumentNonBlocking, initiateEmailSignUp } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -59,6 +59,8 @@ export function SignupForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const auth = useAuth();
+  const db = useFirestore();
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -136,7 +138,7 @@ export function SignupForm() {
     });
 
     return () => unsubscribe();
-  }, [isSubmitting, values, router, toast]);
+  }, [isSubmitting, values, router, toast, auth, db]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);

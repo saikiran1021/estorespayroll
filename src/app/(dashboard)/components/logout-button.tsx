@@ -1,6 +1,6 @@
 'use client';
 import { Button } from "@/components/ui/button";
-import { auth } from "@/lib/firebase";
+import { useAuth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
@@ -8,6 +8,7 @@ import { LogOut } from "lucide-react";
 export function LogoutButton() {
     const { toast } = useToast();
     const router = useRouter();
+    const auth = useAuth();
 
     const handleLogout = async () => {
         try {
