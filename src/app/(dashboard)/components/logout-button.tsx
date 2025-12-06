@@ -1,11 +1,16 @@
 'use client';
-import { Button } from "@/components/ui/button";
+import { Button, ButtonProps } from "@/components/ui/button";
 import { useAuth } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function LogoutButton() {
+interface LogoutButtonProps extends ButtonProps {
+    children?: React.ReactNode;
+}
+
+export function LogoutButton({ children, className, ...props }: LogoutButtonProps) {
     const { toast } = useToast();
     const router = useRouter();
     const auth = useAuth();
@@ -21,9 +26,13 @@ export function LogoutButton() {
     };
 
     return (
-        <Button variant="ghost" className="w-full justify-start text-foreground" onClick={handleLogout}>
+        <Button 
+            className={cn('w-full justify-start text-foreground', className)} 
+            onClick={handleLogout}
+            {...props}
+        >
             <LogOut className="mr-2 h-4 w-4" />
-            Logout
+            {children || 'Logout'}
         </Button>
     )
 }

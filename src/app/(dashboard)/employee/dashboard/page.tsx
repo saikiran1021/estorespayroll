@@ -10,7 +10,7 @@ import { doc, setDoc, getDoc, collection, query, where, getDocs, Timestamp } fro
 import { useFirestore, useUser } from '@/firebase';
 import { useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { LogoutButton } from '../components/logout-button';
+
 
 function AttendanceWidget() {
     const { toast } = useToast();
@@ -66,7 +66,7 @@ function AttendanceWidget() {
             });
             setAttendanceStatus(status);
             toast({ title: 'Success', description: `Attendance marked as ${status}.` });
-        } catch (error: any) {
+        } catch (error: any) => {
             toast({ variant: 'destructive', title: 'Error', description: error.message });
         }
     };
@@ -112,7 +112,6 @@ export default function EmployeeDashboard() {
                 <CardTitle>Welcome, {user?.displayName || user?.email}!</CardTitle>
                 <CardDescription>This is your personal dashboard.</CardDescription>
             </div>
-            <LogoutButton />
           </div>
         </CardHeader>
         <CardContent>

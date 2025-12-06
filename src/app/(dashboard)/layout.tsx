@@ -53,6 +53,9 @@ export default function DashboardLayout({
             <div className="flex-1">
                 <h1 className="text-lg font-semibold">Dashboard</h1>
             </div>
+            <LogoutButton variant="outline" className="w-auto">
+              Exit
+            </LogoutButton>
         </header>
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </SidebarInset>
