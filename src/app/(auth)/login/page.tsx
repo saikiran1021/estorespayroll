@@ -29,8 +29,8 @@ export default function LoginPage() {
             <Image
                 src={logo.imageUrl}
                 alt={logo.description}
-                width={300}
-                height={80}
+                width={400}
+                height={107}
                 data-ai-hint={logo.imageHint}
                 className="object-contain"
             />
@@ -50,8 +50,8 @@ export default function LoginPage() {
                     <Image
                         src={logo.imageUrl}
                         alt={logo.description}
-                        width={200}
-                        height={50}
+                        width={250}
+                        height={67}
                         data-ai-hint={logo.imageHint}
                         className="object-contain"
                     />
