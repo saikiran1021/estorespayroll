@@ -17,7 +17,8 @@ import {
   DollarSign,
   Mail,
   ClipboardCheck,
-  CalendarCheck
+  CalendarCheck,
+  LogIn
 } from 'lucide-react';
 
 type NavItem = {
@@ -45,7 +46,7 @@ const navItems: NavItem[] = [
   { href: '/admin/payslip', label: 'Payslip', icon: DollarSign, roles: ['Admin'] },
   { href: '/admin/attendance', label: 'Attendance', icon: CalendarCheck, roles: ['Admin'] },
   { href: '/admin/tasks', label: 'Assign Work', icon: Briefcase, roles: ['Admin'] },
-  { href: '/admin/mailbox', label: 'Mailbox', icon: Mail, roles: ['Admin'] },
+  { href: '/admin/logins', label: 'Employee Logins', icon: LogIn, roles: ['Admin'] },
   
   // Employee
   { href: '/employee/documents', label: 'Documents', icon: FileText, roles: ['Employee'] },

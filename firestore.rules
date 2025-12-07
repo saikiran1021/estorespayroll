@@ -15,7 +15,7 @@
  *
  * ## Key Security Decisions
  * - **Default Deny**: All operations are denied by default and must be explicitly allowed.
- * - **No User Enumeration**: Listing users from top-level profile collections (e.g., `/employees`) is disallowed to protect user privacy.
+ * - **No User Enumeration**: Listing users from top-level profile collections (e.g., `/employees`) is disallowed to protect user privacy, except for admins who need to see employee lists.
  * - **Role Management**: Only Super Admins are permitted to manage role assignments (i.e., write to `roles_*` collections), except for a user creating their own role on signup.
  * - **Data Integrity**: On creation, documents must contain an ID field that matches the document's ID in the path, ensuring relational consistency. This ID is immutable.
  * - **Prototyping Flexibility**: These rules enforce strict authorization (who can access what) but do not validate the specific shape or data types of documents, allowing for rapid front-end development.
@@ -116,9 +116,9 @@ service cloud.firestore {
      */
     match /employees/{employeeId} {
       allow get: if isOwner(employeeId) || isAdminOrSuperAdmin();
-      allow list: if isAdminOrSuperAdmin() || isSignedIn();
+      allow list: if isAdminOrSuperAdmin();
       allow create: if isOwner(employeeId) && request.resource.data.id == employeeId;
-      allow update: if isExistingOwner(employeeId) && request.resource.data.id == resource.data.id;
+      allow update: if (isExistingOwner(employeeId) || isAdminOrSuperAdmin()) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(employeeId) || isSuperAdmin();
     }
 
@@ -131,7 +131,7 @@ service cloud.firestore {
      */
     match /colleges/{collegeId} {
       allow get: if isOwner(collegeId) || isAdminOrSuperAdmin();
-      allow list: if isAdminOrSuperAdmin();
+      allow list: if isAdminOrSuperAdmin() || isSignedIn();
       allow create: if isOwner(collegeId) && request.resource.data.id == collegeId;
       allow update: if isExistingOwner(collegeId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(collegeId) || isSuperAdmin();
@@ -146,10 +146,10 @@ service cloud.firestore {
      */
     match /industries/{industryId} {
       allow get: if isOwner(industryId) || isAdminOrSuperAdmin();
-      allow list: if isAdminOrSuperAdmin();
+      allow list: if isAdminOrSuperAdmin() || isSignedIn();
       allow create: if isOwner(industryId) && request.resource.data.id == industryId;
       allow update: if isExistingOwner(industryId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(collegeId) || isSuperAdmin();
+      allow delete: if isExistingOwner(industryId) || isSuperAdmin();
     }
 
     // -------------------------------------------------------------------------
