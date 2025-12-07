@@ -108,3 +108,5 @@ export default function MailDisplay({ receivedMail, sentMail, isLoading }: MailD
     </div>
   );
 }
+
+    
