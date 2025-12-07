@@ -42,6 +42,7 @@ const navItems: NavItem[] = [
 
   // Admin
   { href: '/admin/revenue', label: 'Revenue', icon: DollarSign, roles: ['Admin'] },
+  { href: '/admin/payslip', label: 'Payslip', icon: DollarSign, roles: ['Admin'] },
   { href: '/admin/attendance', label: 'Attendance', icon: CalendarCheck, roles: ['Admin'] },
   { href: '/admin/tasks', label: 'Assign Work', icon: Briefcase, roles: ['Admin'] },
   { href: '/admin/mailbox', label: 'Mailbox', icon: Mail, roles: ['Admin'] },
