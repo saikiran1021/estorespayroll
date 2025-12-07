@@ -113,36 +113,40 @@ function AssignTaskForm({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!db) return;
     setIsSubmitting(true);
-    try {
-      const taskRef = collection(
-        db,
-        'employees',
-        values.assignedToEmployeeId,
-        'tasks'
-      );
-      const taskPayload = {
-        assignedToEmployeeId: values.assignedToEmployeeId,
-        description: values.description,
-        dueDate: Timestamp.fromDate(values.dueDate),
-        status: 'Pending',
-        createdAt: serverTimestamp(),
-      };
-      await addDoc(taskRef, taskPayload);
-      toast({
-        title: 'Task Assigned',
-        description: 'The task has been successfully assigned.',
+
+    const taskRef = collection(
+      db,
+      'employees',
+      values.assignedToEmployeeId,
+      'tasks'
+    );
+    const taskPayload = {
+      assignedToEmployeeId: values.assignedToEmployeeId,
+      description: values.description,
+      dueDate: Timestamp.fromDate(values.dueDate),
+      status: 'Pending',
+      createdAt: serverTimestamp(),
+    };
+
+    addDoc(taskRef, taskPayload)
+      .then(() => {
+        toast({
+          title: 'Task Assigned',
+          description: 'The task has been successfully assigned.',
+        });
+        form.reset();
+      })
+      .catch((error) => {
+        const contextualError = new FirestorePermissionError({
+          path: `employees/${values.assignedToEmployeeId}/tasks`,
+          operation: 'create',
+          requestResourceData: taskPayload,
+        });
+        errorEmitter.emit('permission-error', contextualError);
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
-      form.reset();
-    } catch (error) {
-      const contextualError = new FirestorePermissionError({
-        path: `employees/${values.assignedToEmployeeId}/tasks`,
-        operation: 'create',
-        requestResourceData: { ...form.getValues(), status: 'Pending' },
-      });
-      errorEmitter.emit('permission-error', contextualError);
-    } finally {
-      setIsSubmitting(false);
-    }
   }
 
   return (
@@ -405,7 +409,7 @@ export default function AdminTasksPage() {
               <CardTitle>Assign & Track Work</CardTitle>
               <CardDescription>
                 Assign new tasks to employees and monitor their progress.
-              </CardDescription>
+              </cardDescription>
             </div>
           </div>
         </CardHeader>
