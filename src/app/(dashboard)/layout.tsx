@@ -6,6 +6,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarFooter,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import DashboardNav from "./components/dashboard-nav";
 import UserProfile from "./components/user-profile";
@@ -40,10 +41,13 @@ export default function DashboardLayout({
             </div>
         </SidebarHeader>
         <SidebarContent className="p-2">
+            <div className="p-2">
+              <UserProfile />
+            </div>
+            <SidebarSeparator />
             <DashboardNav />
         </SidebarContent>
         <SidebarFooter className="p-2 border-t border-sidebar-border mt-auto">
-            <UserProfile />
             <LogoutButton />
         </SidebarFooter>
       </Sidebar>
