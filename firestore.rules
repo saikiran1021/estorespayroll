@@ -116,7 +116,7 @@ service cloud.firestore {
      */
     match /employees/{employeeId} {
       allow get: if isOwner(employeeId) || isAdminOrSuperAdmin();
-      allow list: if isAdminOrSuperAdmin();
+      allow list: if isAdminOrSuperAdmin() || isSignedIn();
       allow create: if isOwner(employeeId) && request.resource.data.id == employeeId;
       allow update: if isExistingOwner(employeeId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(employeeId) || isSuperAdmin();
@@ -181,7 +181,7 @@ service cloud.firestore {
     match /employees/{employeeId}/tasks/{taskId} {
       allow get: if isOwner(employeeId) || isAdminOrSuperAdmin();
       allow list: if isOwner(employeeId) || isAdminOrSuperAdmin();
-      allow create: if (isOwner(employeeId) || isAdminOrSuperAdmin()) && request.resource.data.assignedToEmployeeId == employeeId;
+      allow create: if (isAdminOrSuperAdmin()) && request.resource.data.assignedToEmployeeId == employeeId;
       allow update: if isOwner(employeeId) || isAdminOrSuperAdmin();
       allow delete: if isOwner(employeeId) || isAdminOrSuperAdmin();
     }
@@ -230,10 +230,8 @@ service cloud.firestore {
      */
     match /messages/{messageId} {
       allow get: if isSignedIn() && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
-      allow list: if isSignedIn() &&
-                   (request.query.where.size() > 0 &&
-                    ((request.query.where[0][0] == 'receiverId' && request.query.where[0][2] == request.auth.uid) ||
-                     (request.query.where[0][0] == 'senderId' && request.query.where[0][2] == request.auth.uid)));
+      allow list: if isSignedIn() && 
+        (request.query.get('receiverId') == request.auth.uid || request.query.get('senderId') == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
       allow update: if isSignedIn() && request.auth.uid == resource.data.receiverId; // Allow receiver to mark as read
       allow delete: if false; // Messages cannot be deleted.

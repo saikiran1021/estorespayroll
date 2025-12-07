@@ -111,6 +111,7 @@ function AssignTaskForm({
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!db) return;
     setIsSubmitting(true);
     try {
       const taskRef = collection(
@@ -259,13 +260,13 @@ function AllTasksList() {
   const [isLoadingTasks, setIsLoadingTasks] = React.useState(true);
 
   const employeesQuery = useMemoFirebase(
-    () => query(collection(db, 'employees')),
+    () => (db ? query(collection(db, 'employees')) : null),
     [db]
   );
   const { data: employees, isLoading: isLoadingEmployees } = useCollection(employeesQuery);
 
   React.useEffect(() => {
-    if (!employees || isLoadingEmployees) return;
+    if (!employees || isLoadingEmployees || !db) return;
 
     const unsubscribes = employees.map((employee) => {
       const tasksQuery = query(collection(db, 'employees', employee.id, 'tasks'));
@@ -297,6 +298,7 @@ function AllTasksList() {
 
 
   const handleDeleteTask = async (task: any) => {
+    if (!db) return;
     const taskRef = doc(db, 'employees', task.assignedToEmployeeId, 'tasks', task.id);
     try {
         await deleteDoc(taskRef);
@@ -320,18 +322,18 @@ function AllTasksList() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoadingTasks && (
+        {(isLoadingTasks || isLoadingEmployees) && (
             <div className="flex items-center gap-2 text-muted-foreground justify-center p-8">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 <span>Loading all tasks...</span>
             </div>
         )}
-        {!isLoadingTasks && allTasks.length === 0 && (
+        {!(isLoadingTasks || isLoadingEmployees) && allTasks.length === 0 && (
             <div className="flex items-center justify-center h-48 border-2 border-dashed rounded-lg">
                 <p className="text-muted-foreground">No tasks have been assigned yet.</p>
             </div>
         )}
-        {!isLoadingTasks && allTasks.length > 0 && (
+        {!(isLoadingTasks || isLoadingEmployees) && allTasks.length > 0 && (
           <Table>
             <TableHeader>
               <TableRow>
@@ -420,7 +422,7 @@ export default function AdminTasksPage() {
        <CardFooter className="flex justify-end mt-4">
           <Button asChild>
             <Link href="/admin/dashboard">
-              <ArrowLeft className="mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Exit to Dashboard
             </Link>
           </Button>
