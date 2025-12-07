@@ -68,16 +68,9 @@ export default function DashboardNav() {
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(userRole));
 
-  // Remove duplicates for Super Admin (specifically the Mailbox link)
-  const uniqueNavItems = userRole === 'Super Admin' 
-    ? filteredNavItems.filter((item, index, self) => 
-        index === self.findIndex((t) => t.label === item.label)
-      )
-    : filteredNavItems;
-
   return (
     <SidebarMenu>
-      {uniqueNavItems.map(item => (
+      {filteredNavItems.map(item => (
         <SidebarMenuItem key={item.href}>
           <SidebarMenuButton
             asChild
