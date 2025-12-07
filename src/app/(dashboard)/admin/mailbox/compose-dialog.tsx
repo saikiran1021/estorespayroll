@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -21,6 +21,13 @@ import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebas
 import { collection, query } from 'firebase/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+interface UserOption {
+    id: string;
+    email: string;
+    label: string;
+    role: string;
+}
+
 export function ComposeDialog() {
   const { toast } = useToast();
   const { user } = useUser();
@@ -29,36 +36,54 @@ export function ComposeDialog() {
   const [isLoading, setIsLoading] = useState(false);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
-  const [selectedEmployee, setSelectedEmployee] = useState('');
+  const [selectedRecipient, setSelectedRecipient] = useState('');
 
-  const employeesQuery = useMemoFirebase(() => {
-    if (!db) return null;
-    return query(collection(db, 'employees'));
-  }, [db]);
+  // Queries for all user types
+  const employeesQuery = useMemoFirebase(() => db ? query(collection(db, 'employees')) : null, [db]);
+  const adminsQuery = useMemoFirebase(() => db ? query(collection(db, 'admins')) : null, [db]);
+  const superAdminsQuery = useMemoFirebase(() => db ? query(collection(db, 'super_admins')) : null, [db]);
+  const collegesQuery = useMemoFirebase(() => db ? query(collection(db, 'colleges')) : null, [db]);
+  const industriesQuery = useMemoFirebase(() => db ? query(collection(db, 'industries')) : null, [db]);
 
-  const { data: employees, isLoading: employeesLoading } = useCollection(employeesQuery);
+  const { data: employees, isLoading: l1 } = useCollection(employeesQuery);
+  const { data: admins, isLoading: l2 } = useCollection(adminsQuery);
+  const { data: superAdmins, isLoading: l3 } = useCollection(superAdminsQuery);
+  const { data: colleges, isLoading: l4 } = useCollection(collegesQuery);
+  const { data: industries, isLoading: l5 } = useCollection(industriesQuery);
+
+  const isUsersLoading = l1 || l2 || l3 || l4 || l5;
+
+  const allUsers = useMemo<UserOption[]>(() => {
+    const users: UserOption[] = [];
+    employees?.forEach(u => users.push({ id: u.id, email: u.email, label: `${u.name} ${u.surname} (${u.email})`, role: 'Employee' }));
+    admins?.forEach(u => users.push({ id: u.id, email: u.email, label: `${u.name} ${u.surname} (${u.email})`, role: 'Admin' }));
+    superAdmins?.forEach(u => users.push({ id: u.id, email: u.email, label: `${u.name} ${u.surname} (${u.email})`, role: 'Super Admin' }));
+    colleges?.forEach(u => users.push({ id: u.id, email: u.email, label: `${u.name} (${u.email})`, role: 'College' }));
+    industries?.forEach(u => users.push({ id: u.id, email: u.email, label: `${u.name} (${u.email})`, role: 'Industry' }));
+    return users.sort((a,b) => a.label.localeCompare(b.label));
+  }, [employees, admins, superAdmins, colleges, industries]);
 
   const handleSend = async () => {
     if (!user || !user.email) {
       toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to send a message.' });
       return;
     }
-    if (!selectedEmployee || !subject || !body) {
+    if (!selectedRecipient || !subject || !body) {
         toast({ variant: 'destructive', title: 'Missing Fields', description: 'Please select a recipient and fill out the subject and body.' });
         return;
     }
     setIsLoading(true);
     try {
-      const selectedEmployeeData = employees?.find(emp => emp.id === selectedEmployee);
-      if (!selectedEmployeeData) {
-        throw new Error('Selected employee not found.');
+      const recipientData = allUsers.find(u => u.id === selectedRecipient);
+      if (!recipientData) {
+        throw new Error('Selected recipient not found.');
       }
 
       await sendMessageToEmployee({
         senderId: user.uid,
         senderEmail: user.email,
-        receiverId: selectedEmployeeData.id,
-        receiverEmail: selectedEmployeeData.email,
+        receiverId: recipientData.id,
+        receiverEmail: recipientData.email,
         subject,
         body,
       });
@@ -66,7 +91,7 @@ export function ComposeDialog() {
       setIsOpen(false);
       setSubject('');
       setBody('');
-      setSelectedEmployee('');
+      setSelectedRecipient('');
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Failed to Send', description: "Could not send message. Check permissions." });
     } finally {
@@ -85,25 +110,25 @@ export function ComposeDialog() {
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
           <DialogTitle>New Message</DialogTitle>
-          <DialogDescription>Compose a new message to an employee.</DialogDescription>
+          <DialogDescription>Compose a new message to any user in the system.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="to" className="text-right">
               To
             </Label>
-            <Select onValueChange={setSelectedEmployee} value={selectedEmployee}>
+            <Select onValueChange={setSelectedRecipient} value={selectedRecipient}>
                 <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder={employeesLoading ? "Loading employees..." : "Select an employee"} />
+                    <SelectValue placeholder={isUsersLoading ? "Loading users..." : "Select a recipient"} />
                 </SelectTrigger>
                 <SelectContent>
-                    {!employeesLoading && employees && employees.map(employee => (
-                        <SelectItem key={employee.id} value={employee.id}>
-                           {employee.name} {employee.surname} ({employee.email})
+                    {!isUsersLoading && allUsers.map(u => (
+                        <SelectItem key={u.id} value={u.id}>
+                           {u.label}
                         </SelectItem>
                     ))}
-                     {!employeesLoading && employees?.length === 0 && (
-                        <div className="text-center text-sm text-muted-foreground p-4">No employees found.</div>
+                     {!isUsersLoading && allUsers?.length === 0 && (
+                        <div className="text-center text-sm text-muted-foreground p-4">No users found.</div>
                     )}
                 </SelectContent>
             </Select>
@@ -125,7 +150,7 @@ export function ComposeDialog() {
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSend} disabled={isLoading || employeesLoading}>
+          <Button onClick={handleSend} disabled={isLoading || isUsersLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Send Message
           </Button>

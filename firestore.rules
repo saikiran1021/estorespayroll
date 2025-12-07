@@ -101,7 +101,7 @@ service cloud.firestore {
      */
     match /super_admins/{superAdminId} {
       allow get: if isOwner(superAdminId) || isSuperAdmin();
-      allow list: if isSuperAdmin();
+      allow list: if isAdminOrSuperAdmin(); // Admins can see Super Admins to send mail
       allow create: if isOwner(superAdminId) && request.resource.data.id == superAdminId;
       allow update: if isExistingOwner(superAdminId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(superAdminId) || isSuperAdmin();
