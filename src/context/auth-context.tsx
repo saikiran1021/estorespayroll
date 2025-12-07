@@ -32,7 +32,7 @@ const roleDashboardMap: Record<string, string> = {
     'Industry': '/industry/dashboard',
 };
 
-async function getUserRoleAndData(db: Firestore, uid: string): Promise<{ role: UserRole, data: DocumentData | null }> {
+async function getUserRoleAndData(db: Firestore, uid: string, selectedRole: string | null): Promise<{ role: UserRole, data: DocumentData | null }> {
     const roleCollections: [string, UserRole][] = [
         ['roles_super_admin', 'Super Admin'],
         ['roles_admin', 'Admin'],
@@ -41,6 +41,27 @@ async function getUserRoleAndData(db: Firestore, uid: string): Promise<{ role: U
         ['roles_industry', 'Industry'],
     ];
 
+    // If a role was selected at login, check that first for a faster redirect.
+    if (selectedRole) {
+        const roleInfo = roleCollections.find(rc => rc[1] === selectedRole);
+        if (roleInfo) {
+            const [collectionName, role] = roleInfo;
+            const roleDocRef = doc(db, collectionName, uid);
+            const roleDocSnap = await getDoc(roleDocRef);
+            if (roleDocSnap.exists()) {
+                const profileCollection = collectionName.replace('roles_', '') + 's';
+                const userDocRef = doc(db, profileCollection, uid);
+                const userDocSnap = await getDoc(userDocRef);
+                return {
+                    role,
+                    data: userDocSnap.exists() ? userDocSnap.data() : null,
+                };
+            }
+        }
+    }
+
+
+    // Fallback to iterating through all roles if no specific role was provided or found.
     for (const [collectionName, role] of roleCollections) {
         const roleDocRef = doc(db, collectionName, uid);
         const roleDocSnap = await getDoc(roleDocRef);
@@ -73,17 +94,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   useEffect(() => {
-    // This effect runs when Firebase user state or path changes.
     if (isUserLoading) {
         setAuthContextValue(prev => ({ ...prev, loading: true }));
         return;
     }
 
     const isPublicRoute = publicRoutes.includes(pathname);
+    const selectedRole = sessionStorage.getItem('selectedRole'); // Role from login form
 
     if (user) {
-        // User is logged in.
-        getUserRoleAndData(db, user.uid).then(({ role, data }) => {
+        getUserRoleAndData(db, user.uid, selectedRole).then(({ role, data }) => {
             const newContext: AuthContextType = {
                 user: user,
                 userRole: role,
@@ -94,12 +114,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (role) {
                 const targetDashboard = roleDashboardMap[role];
-                // If on a public page (like /login), redirect to the correct dashboard.
                 if (isPublicRoute) {
                     router.replace(targetDashboard);
+                    sessionStorage.removeItem('selectedRole'); // Clean up after redirect
                 }
             } else {
-                // Logged in but no role found, this is an invalid state.
                 auth.signOut();
                 if (!isPublicRoute) {
                     router.replace('/login');
@@ -107,7 +126,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
         });
     } else {
-        // No user is logged in.
         setAuthContextValue({ user: null, userRole: null, employeeId: null, loading: false });
         if (!isPublicRoute) {
             router.replace('/login');

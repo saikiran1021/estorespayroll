@@ -52,13 +52,16 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
+      // Store the selected role in session storage to give a hint to the AuthProvider
+      sessionStorage.setItem('selectedRole', values.role);
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
         title: 'Login Successful',
         description: 'Redirecting to your dashboard...',
       });
-      // The redirect is handled by the AuthProvider
+      // The redirect is handled by the AuthProvider, which now knows the intended role
     } catch (error: any) {
+      sessionStorage.removeItem('selectedRole'); // Clean up on failure
       toast({
         variant: 'destructive',
         title: 'Login Failed',
