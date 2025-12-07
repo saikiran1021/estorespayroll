@@ -3,11 +3,11 @@
 import { useAuthContext } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, X } from 'lucide-react';
+import { Check, Loader2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
-import { doc, setDoc, getDoc, collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import { useFirestore, useUser } from '@/firebase';
+import { useState, useMemo } from 'react';
+import { doc, setDoc, collection, query, where, Timestamp } from 'firebase/firestore';
+import { useFirestore, useUser, useCollection, useMemoFirebase, FirestorePermissionError, errorEmitter } from '@/firebase';
 import { useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { LogoutButton } from '../../components/logout-button';
@@ -18,38 +18,35 @@ function AttendanceWidget() {
     const { user } = useUser();
     const db = useFirestore();
     const [attendanceStatus, setAttendanceStatus] = useState<'Present' | 'Absent' | 'Not Marked' | null>(null);
-    const [loading, setLoading] = useState(true);
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = useMemo(() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }, []);
 
+    const attendanceQuery = useMemoFirebase(() => {
+        if (!user || !db) return null;
+        return query(
+            collection(db, 'attendance'),
+            where('employeeUid', '==', user.uid),
+            where('date', '>=', Timestamp.fromDate(today))
+        );
+    }, [user, db, today]);
+
+    const { data: attendanceData, isLoading: attendanceLoading } = useCollection(attendanceQuery);
+    
     useEffect(() => {
-        const fetchAttendance = async () => {
-            if (!user) return;
-            try {
-                const attendanceCol = collection(db, 'attendance');
-                const q = query(
-                    attendanceCol, 
-                    where('employeeUid', '==', user.uid),
-                    where('date', '>=', Timestamp.fromDate(today))
-                );
-                const querySnapshot = await getDocs(q);
-                if (!querySnapshot.empty) {
-                    const attendanceData = querySnapshot.docs[0].data();
-                    setAttendanceStatus(attendanceData.status);
-                } else {
-                    setAttendanceStatus('Not Marked');
-                }
-            } catch (error) {
-                console.error("Error fetching attendance: ", error);
-                setAttendanceStatus(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchAttendance();
-    }, [user, today, db]);
+        if (attendanceLoading) {
+            setAttendanceStatus(null);
+            return;
+        }
+        if (attendanceData && attendanceData.length > 0) {
+            setAttendanceStatus(attendanceData[0].status);
+        } else {
+            setAttendanceStatus('Not Marked');
+        }
+    }, [attendanceData, attendanceLoading]);
 
 
     const markAttendance = async (status: 'Present' | 'Absent') => {
@@ -58,18 +55,26 @@ function AttendanceWidget() {
             return;
         }
 
-        try {
-            const attendanceRef = doc(db, 'attendance', `${user.uid}_${today.toISOString().split('T')[0]}`);
-            await setDoc(attendanceRef, {
-                employeeUid: user.uid,
-                date: Timestamp.fromDate(today),
-                status: status,
-            });
-            setAttendanceStatus(status);
+        const attendanceRef = doc(db, 'attendance', `${user.uid}_${today.toISOString().split('T')[0]}`);
+        const attendancePayload = {
+            employeeUid: user.uid,
+            date: Timestamp.fromDate(today),
+            status: status,
+        };
+
+        setDoc(attendanceRef, attendancePayload)
+          .then(() => {
             toast({ title: 'Success', description: `Attendance marked as ${status}.` });
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'Error', description: error.message });
-        }
+          })
+          .catch((error: any) => {
+            const contextualError = new FirestorePermissionError({
+                path: attendanceRef.path,
+                operation: 'write',
+                requestResourceData: attendancePayload
+            });
+            errorEmitter.emit('permission-error', contextualError);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not mark attendance due to permissions.' });
+        });
     };
 
     return (
@@ -79,8 +84,11 @@ function AttendanceWidget() {
                 <CardDescription>Mark your attendance for today.</CardDescription>
             </CardHeader>
             <CardContent>
-                {loading ? (
-                    <p>Loading status...</p>
+                {attendanceLoading || attendanceStatus === null ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Loading status...</span>
+                    </div>
                 ) : attendanceStatus === 'Not Marked' ? (
                     <div className="flex gap-2">
                         <Button onClick={() => markAttendance('Present')} className="w-full bg-green-500 hover:bg-green-600 text-white">
