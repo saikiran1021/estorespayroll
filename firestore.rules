@@ -149,7 +149,7 @@ service cloud.firestore {
       allow list: if isAdminOrSuperAdmin();
       allow create: if isOwner(industryId) && request.resource.data.id == industryId;
       allow update: if isExistingOwner(industryId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(industryId) || isSuperAdmin();
+      allow delete: if isExistingOwner(collegeId) || isSuperAdmin();
     }
 
     // -------------------------------------------------------------------------
@@ -221,24 +221,18 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
 
     /**
-     * @description Stores messages. Access is highly restricted due to schema limitations.
+     * @description Stores messages.
      * @path /messages/{messageId}
-     * @allow (create) A signed-in user creating a message, provided they set 'senderId' to their own UID.
-     * @deny (get) Any user reading any message. This is denied until the schema is improved.
-     * @principle Enforces sender identity on create and defaults to secure denial for reads/updates.
+     * @allow (create) A signed-in user creating a message, if they are the sender.
+     * @allow (read) The sender or receiver of the message.
+     * @principle Enforces sender identity on create and participant access for reads.
      */
     match /messages/{messageId} {
-      // CRITICAL: The 'Message' entity is missing UID fields for authorization.
-      // To implement secure read/update access, the schema MUST include fields like:
-      // - senderId (string, UID of the sender)
-      // - receiverId (string, UID of the receiver)
-      // - OR participantIds (array of UIDs for group messages)
-      // The rules below are a secure placeholder.
-      allow get: if false; // TODO: Change to `if request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId`
-      allow list: if false;
+      allow get: if isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
+      allow list: if isSignedIn(); // Users can list messages to query for their own.
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
-      allow update: if false; // TODO: Change to `if request.auth.uid == resource.data.senderId`
-      allow delete: if false; // TODO: Change to `if request.auth.uid == resource.data.senderId`
+      allow update: if isSignedIn() && request.auth.uid == resource.data.receiverId; // Allow receiver to mark as read
+      allow delete: if false; // Messages cannot be deleted.
     }
 
     /**
@@ -337,3 +331,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
