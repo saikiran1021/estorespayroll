@@ -49,10 +49,14 @@ function UserTable({ userType }: { userType: 'employees' | 'admins' }) {
                     {user.lastLogin ? format(parseISO(user.lastLogin), "PPP 'at' p") : 'Never'}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">View</Badge>
+                    <Button asChild variant="outline" size="sm">
+                        <Link href={`/super-admin/users/${user.id}/attendance`}>View</Link>
+                    </Button>
                   </TableCell>
                   <TableCell>
-                     <Badge variant="outline">View</Badge>
+                     <Button asChild variant="outline" size="sm">
+                        <Link href={`/super-admin/users/${user.id}/tasks`}>View</Link>
+                     </Button>
                   </TableCell>
                 </TableRow>
               ))

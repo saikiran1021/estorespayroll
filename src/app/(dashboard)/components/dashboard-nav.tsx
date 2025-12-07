@@ -74,7 +74,7 @@ export default function DashboardNav() {
         <SidebarMenuItem key={item.href}>
           <SidebarMenuButton
             asChild
-            isActive={pathname === item.href}
+            isActive={pathname.startsWith(item.href)}
             className="text-foreground"
           >
             <a href={item.href}>
