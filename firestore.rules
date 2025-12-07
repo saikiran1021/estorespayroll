@@ -182,8 +182,8 @@ service cloud.firestore {
       allow get: if isOwner(employeeId) || isAdminOrSuperAdmin();
       allow list: if isOwner(employeeId) || isAdminOrSuperAdmin();
       allow create: if (isOwner(employeeId) || isAdminOrSuperAdmin()) && request.resource.data.assignedToEmployeeId == employeeId;
-      allow update: if (isExistingOwner(employeeId) || isAdminOrSuperAdmin()) && request.resource.data.assignedToEmployeeId == resource.data.assignedToEmployeeId;
-      allow delete: if isExistingOwner(employeeId) || isAdminOrSuperAdmin();
+      allow update: if isOwner(employeeId) || isAdminOrSuperAdmin();
+      allow delete: if isOwner(employeeId) || isAdminOrSuperAdmin();
     }
 
     /**
