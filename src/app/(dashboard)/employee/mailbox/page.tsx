@@ -62,7 +62,7 @@ export default function EmployeeMailboxPage() {
         <CardFooter className="flex justify-end">
           <Button asChild>
             <Link href="/employee/dashboard">
-              <ArrowLeft className="mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Exit to Dashboard
             </Link>
           </Button>
@@ -71,5 +71,3 @@ export default function EmployeeMailboxPage() {
     </div>
   );
 }
-
-    

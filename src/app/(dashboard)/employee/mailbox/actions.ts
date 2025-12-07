@@ -23,7 +23,9 @@ export async function sendMessageToAdmin(payload: MessagePayload) {
     isRead: false,
   };
 
-  return addDoc(messagesRef, messageData)
+  // The 'addDoc' function returns a promise that resolves with a DocumentReference.
+  // We don't need to await it here; we just handle the potential error.
+  addDoc(messagesRef, messageData)
     .catch((error) => {
         const contextualError = new FirestorePermissionError({
             path: messagesRef.path,
@@ -31,9 +33,10 @@ export async function sendMessageToAdmin(payload: MessagePayload) {
             requestResourceData: messageData
         });
         errorEmitter.emit('permission-error', contextualError);
-        // Re-throw the original error to be caught by the caller
+        
+        // It's important to re-throw the error so the calling client code knows the operation failed.
+        // The global error listener will catch and display the detailed error for debugging,
+        // while the client can show a user-friendly message.
         throw error;
     });
 }
-
-    

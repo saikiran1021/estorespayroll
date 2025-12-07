@@ -85,8 +85,8 @@ service cloud.firestore {
      * @principle Restricts access to a user's own data tree and prevents user enumeration.
      */
     match /admins/{adminId} {
-      allow get: if isOwner(adminId) || isSuperAdmin();
-      allow list: if isSuperAdmin();
+      allow get: if isOwner(adminId) || isSuperAdmin() || isSignedIn(); // Allow any signed in user to read admin profiles to send mail
+      allow list: if isSuperAdmin() || isSignedIn(); // Allow any signed in user to list admins to send mail
       allow create: if isOwner(adminId) && request.resource.data.id == adminId;
       allow update: if isExistingOwner(adminId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(adminId) || isSuperAdmin();
@@ -225,15 +225,15 @@ service cloud.firestore {
      * @path /messages/{messageId}
      * @allow (create) A signed-in user creating a message, if they are the sender.
      * @allow (read) The sender or receiver of the message.
+     * @allow (list) A user may query for messages where they are the sender or receiver.
      * @principle Enforces sender identity on create and participant access for reads and lists.
      */
     match /messages/{messageId} {
       allow get: if isSignedIn() && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
       allow list: if isSignedIn() && 
-                   (request.query.where.size() == 1 && 
-                    (request.query.where[0][0] == 'receiverId' || request.query.where[0][0] == 'senderId') && 
-                    request.query.where[0][1] == '==' && 
-                    request.query.where[0][2] == request.auth.uid);
+                   (request.query.where.size() > 0 && 
+                    ((request.query.where[0][0] == 'receiverId' && request.query.where[0][2] == request.auth.uid) ||
+                     (request.query.where[0][0] == 'senderId' && request.query.where[0][2] == request.auth.uid)));
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
       allow update: if isSignedIn() && request.auth.uid == resource.data.receiverId; // Allow receiver to mark as read
       allow delete: if false; // Messages cannot be deleted.

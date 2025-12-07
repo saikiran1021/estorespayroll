@@ -18,7 +18,7 @@ import { Loader2, PenSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { sendMessageToAdmin } from './actions';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function ComposeDialog() {
@@ -31,7 +31,12 @@ export function ComposeDialog() {
   const [body, setBody] = useState('');
   const [selectedAdmin, setSelectedAdmin] = useState('');
 
-  const adminsQuery = useMemoFirebase(() => collection(db, 'admins'), [db]);
+  const adminsQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    // Query the 'admins' collection to get a list of all administrators
+    return query(collection(db, 'admins'));
+  }, [db]);
+
   const { data: admins, isLoading: adminsLoading } = useCollection(adminsQuery);
 
   const handleSend = async () => {
@@ -98,6 +103,9 @@ export function ComposeDialog() {
                            {admin.name} {admin.surname} ({admin.email})
                         </SelectItem>
                     ))}
+                     {!adminsLoading && admins?.length === 0 && (
+                        <div className="text-center text-sm text-muted-foreground p-4">No admins found.</div>
+                    )}
                 </SelectContent>
             </Select>
           </div>
@@ -118,7 +126,7 @@ export function ComposeDialog() {
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSend} disabled={isLoading}>
+          <Button onClick={handleSend} disabled={isLoading || adminsLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Send Message
           </Button>
@@ -127,5 +135,3 @@ export function ComposeDialog() {
     </Dialog>
   );
 }
-
-    
