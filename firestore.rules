@@ -225,11 +225,15 @@ service cloud.firestore {
      * @path /messages/{messageId}
      * @allow (create) A signed-in user creating a message, if they are the sender.
      * @allow (read) The sender or receiver of the message.
-     * @principle Enforces sender identity on create and participant access for reads.
+     * @principle Enforces sender identity on create and participant access for reads and lists.
      */
     match /messages/{messageId} {
       allow get: if isSignedIn() && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
-      allow list: if isSignedIn() && (request.query.where[0][2] == request.auth.uid);
+      allow list: if isSignedIn() && 
+                   (request.query.where.size() == 1 && 
+                    (request.query.where[0][0] == 'receiverId' || request.query.where[0][0] == 'senderId') && 
+                    request.query.where[0][1] == '==' && 
+                    request.query.where[0][2] == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
       allow update: if isSignedIn() && request.auth.uid == resource.data.receiverId; // Allow receiver to mark as read
       allow delete: if false; // Messages cannot be deleted.
@@ -331,5 +335,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
