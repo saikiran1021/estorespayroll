@@ -9,14 +9,16 @@ import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuthContext } from '@/context/auth-context';
 
 function UserTable({ userType }: { userType: 'colleges' | 'industries' }) {
   const db = useFirestore();
+  const { userRole } = useAuthContext();
 
   const usersQuery = useMemoFirebase(() => {
-    if (!db) return null;
+    if (!db || !userRole) return null;
     return query(collection(db, userType));
-  }, [db, userType]);
+  }, [db, userType, userRole]);
 
   const { data: users, isLoading } = useCollection(usersQuery);
 
