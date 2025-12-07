@@ -409,7 +409,7 @@ export default function AdminTasksPage() {
               <CardTitle>Assign & Track Work</CardTitle>
               <CardDescription>
                 Assign new tasks to employees and monitor their progress.
-              </cardDescription>
+              </CardDescription>
             </div>
           </div>
         </CardHeader>
