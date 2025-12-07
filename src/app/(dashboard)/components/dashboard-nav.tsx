@@ -50,6 +50,7 @@ const navItems: NavItem[] = [
   { href: '/admin/logins', label: 'Employee Logins', icon: LogIn, roles: ['Admin'] },
   
   // Employee
+  { href: '/employee/partners', label: 'Partners', icon: Users, roles: ['Employee'] },
   { href: '/employee/documents', label: 'Documents', icon: FileText, roles: ['Employee'] },
   { href: '/employee/payslip', label: 'Payslip', icon: DollarSign, roles: ['Employee'] },
   { href: '/employee/tasks', label: 'Assigned Work', icon: Briefcase, roles: ['Employee'] },
