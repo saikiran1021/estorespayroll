@@ -454,6 +454,11 @@
           "type": "string",
           "description": "The email address.",
           "format": "email"
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL of the industry's profile photo.",
+          "format": "uri"
         }
       },
       "required": [

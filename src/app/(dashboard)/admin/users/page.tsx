@@ -4,13 +4,14 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, Loader2, Users, Building, GraduationCap, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, Users, Building, GraduationCap } from 'lucide-react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthContext } from '@/context/auth-context';
 import { AddCollegeDialog } from './add-college-dialog';
+import { AddIndustryDialog } from './add-industry-dialog';
 
 function UserTable({ userType }: { userType: 'colleges' | 'industries' }) {
   const db = useFirestore();
@@ -112,10 +113,7 @@ export default function AdminManageUsersPage() {
                       <CardTitle>Industry Users</CardTitle>
                       <CardDescription>List of all registered industry partners.</CardDescription>
                     </div>
-                     <Button>
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Add Industry
-                    </Button>
+                     <AddIndustryDialog />
                   </div>
                 </CardHeader>
                 <CardContent>
