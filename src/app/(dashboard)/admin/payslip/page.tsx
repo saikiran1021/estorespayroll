@@ -8,10 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const mockEmployees = [
-    { id: 'emp-001', name: 'John Doe', status: 'Paid' },
-    { id: 'emp-002', name: 'Jane Smith', status: 'Paid' },
-    { id: 'emp-003', name: 'Peter Jones', status: 'Pending' },
-    { id: 'emp-004', name: 'Mary Williams', status: 'Paid' },
+    { id: 'emp-001', name: 'John Doe', status: 'Paid', salary: '₹50,000.00' },
+    { id: 'emp-002', name: 'Jane Smith', status: 'Paid', salary: '₹55,000.00' },
+    { id: 'emp-003', name: 'Peter Jones', status: 'Pending', salary: '₹48,000.00' },
+    { id: 'emp-004', name: 'Mary Williams', status: 'Paid', salary: '₹62,000.00' },
 ];
 
 export default function AdminPayslipPage() {
@@ -35,6 +35,7 @@ export default function AdminPayslipPage() {
                     <TableRow>
                         <TableHead>Employee ID</TableHead>
                         <TableHead>Employee Name</TableHead>
+                        <TableHead>Salary Amount</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -44,6 +45,7 @@ export default function AdminPayslipPage() {
                         <TableRow key={employee.id}>
                             <TableCell className="font-medium">{employee.id}</TableCell>
                             <TableCell>{employee.name}</TableCell>
+                            <TableCell>{employee.salary}</TableCell>
                             <TableCell>
                                 <Badge className={employee.status === 'Paid' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'}>
                                     {employee.status === 'Paid' ? <CheckCircle className="mr-2 h-4 w-4" /> : <XCircle className="mr-2 h-4 w-4" />}
@@ -61,7 +63,7 @@ export default function AdminPayslipPage() {
         <CardFooter className="flex justify-end">
           <Button asChild>
             <Link href="/admin/dashboard">
-              <ArrowLeft className="mr-2" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Exit to Dashboard
             </Link>
           </Button>
