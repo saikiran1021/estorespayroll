@@ -10,6 +10,7 @@ import { collection, query } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthContext } from '@/context/auth-context';
+import { AddCollegeDialog } from './add-college-dialog';
 
 function UserTable({ userType }: { userType: 'colleges' | 'industries' }) {
   const db = useFirestore();
@@ -95,10 +96,7 @@ export default function AdminManageUsersPage() {
                       <CardTitle>College Users</CardTitle>
                       <CardDescription>List of all registered college partners.</CardDescription>
                     </div>
-                    <Button>
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Add College
-                    </Button>
+                    <AddCollegeDialog />
                   </div>
                 </CardHeader>
                 <CardContent>

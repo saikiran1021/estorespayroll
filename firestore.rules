@@ -132,7 +132,7 @@ service cloud.firestore {
     match /colleges/{collegeId} {
       allow get: if isOwner(collegeId) || isAdminOrSuperAdmin();
       allow list: if isAdminOrSuperAdmin() || isSignedIn();
-      allow create: if isOwner(collegeId) && request.resource.data.id == collegeId;
+      allow create: if (isOwner(collegeId) || isAdminOrSuperAdmin()) && request.resource.data.id == collegeId;
       allow update: if isExistingOwner(collegeId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(collegeId) || isSuperAdmin();
     }
@@ -196,7 +196,7 @@ service cloud.firestore {
     match /colleges/{collegeId}/collegeData/{collegeDataId} {
       allow get: if isOwner(collegeId) || isAdminOrSuperAdmin();
       allow list: if isOwner(collegeId) || isAdminOrSuperAdmin();
-      allow create: if isOwner(collegeId) && request.resource.data.collegeId == collegeId;
+      allow create: if (isOwner(collegeId) || isAdminOrSuperAdmin()) && request.resource.data.collegeId == collegeId;
       allow update: if (isExistingOwner(collegeId) || isAdminOrSuperAdmin()) && request.resource.data.collegeId == resource.data.collegeId;
       allow delete: if isExistingOwner(collegeId) || isAdminOrSuperAdmin();
     }
@@ -312,7 +312,7 @@ service cloud.firestore {
     match /roles_college/{uid} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isOwner(uid) || isSuperAdmin();
+      allow create: if isOwner(uid) || isAdminOrSuperAdmin();
       allow update: if isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
