@@ -84,6 +84,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { useAuthContext } from '@/context/auth-context';
 
 const formSchema = z.object({
   assignedToEmployeeId: z.string().min(1, 'Please select an employee.'),
@@ -259,13 +260,17 @@ function AssignTaskForm({
 
 function AllTasksList() {
   const db = useFirestore();
+  const { userRole } = useAuthContext();
   const { toast } = useToast();
   const [allTasks, setAllTasks] = React.useState<any[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = React.useState(true);
 
   const employeesQuery = useMemoFirebase(
-    () => (db ? query(collection(db, 'employees')) : null),
-    [db]
+    () => {
+        if (!db || !userRole || !['Admin', 'Super Admin'].includes(userRole)) return null;
+        return query(collection(db, 'employees'));
+    },
+    [db, userRole]
   );
   const { data: employees, isLoading: isLoadingEmployees } = useCollection(employeesQuery);
 
@@ -392,9 +397,11 @@ function AllTasksList() {
 
 export default function AdminTasksPage() {
   const db = useFirestore();
+  const { userRole } = useAuthContext();
+
   const employeesQuery = useMemoFirebase(
-    () => (db ? query(collection(db, 'employees')) : null),
-    [db]
+    () => (db && userRole && ['Admin', 'Super Admin'].includes(userRole) ? query(collection(db, 'employees')) : null),
+    [db, userRole]
   );
   const { data: employees, isLoading: isLoadingEmployees } =
     useCollection(employeesQuery);
