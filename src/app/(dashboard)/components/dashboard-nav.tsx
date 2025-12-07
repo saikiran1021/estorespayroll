@@ -47,7 +47,7 @@ const navItems: NavItem[] = [
   { href: '/admin/attendance', label: 'Attendance', icon: CalendarCheck, roles: ['Admin'] },
   { href: '/admin/tasks', label: 'Assign Work', icon: Briefcase, roles: ['Admin'] },
   { href: '/admin/logins', label: 'Employee Logins', icon: LogIn, roles: ['Admin'] },
-  { href: '/admin/mailbox', label: 'Mailbox', icon: Mail, roles: ['Admin', 'Super Admin']},
+  { href: '/admin/mailbox', label: 'Mailbox', icon: Mail, roles: ['Admin']},
   
   // Employee
   { href: '/employee/documents', label: 'Documents', icon: FileText, roles: ['Employee'] },
