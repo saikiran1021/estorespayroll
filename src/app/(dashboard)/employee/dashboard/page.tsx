@@ -27,9 +27,9 @@ function AttendanceWidget() {
 
     const attendanceQuery = useMemoFirebase(() => {
         if (!user || !db) return null;
+        // Correctly query the subcollection under the specific employee's document
         return query(
-            collection(db, 'attendance'),
-            where('employeeUid', '==', user.uid),
+            collection(db, 'employees', user.uid, 'attendance'),
             where('date', '>=', Timestamp.fromDate(today))
         );
     }, [user, db, today]);
@@ -55,9 +55,9 @@ function AttendanceWidget() {
             return;
         }
 
-        const attendanceRef = doc(db, 'attendance', `${user.uid}_${today.toISOString().split('T')[0]}`);
+        const attendanceRef = doc(db, 'employees', user.uid, 'attendance', today.toISOString().split('T')[0]);
         const attendancePayload = {
-            employeeUid: user.uid,
+            employeeId: user.uid, // employeeId is required by security rules
             date: Timestamp.fromDate(today),
             status: status,
         };
@@ -73,7 +73,8 @@ function AttendanceWidget() {
                 requestResourceData: attendancePayload
             });
             errorEmitter.emit('permission-error', contextualError);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not mark attendance due to permissions.' });
+            // The FirebaseErrorListener will throw the error, so a toast here is redundant
+            // and can obscure the detailed error from the developer overlay.
         });
     };
 
@@ -121,7 +122,6 @@ export default function EmployeeDashboard() {
                 <CardTitle>Welcome, {user?.displayName || user?.email}!</CardTitle>
                 <CardDescription>This is your personal dashboard.</CardDescription>
             </div>
-            <LogoutButton variant="outline" className="w-auto">Logout</LogoutButton>
           </div>
         </CardHeader>
         <CardContent>
