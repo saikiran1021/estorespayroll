@@ -97,7 +97,7 @@ export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?:
       phone: phone || '',
       email: email,
       lastLogin: new Date().toISOString(),
-      isVerified: false, // All users created by admin start as verified.
+      isVerified: true, 
       photoUrl: photoUrl || ''
     };
 

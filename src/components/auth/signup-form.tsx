@@ -69,9 +69,7 @@ export function SignupForm() {
         const result = await createNewUser({
             email: values.email,
             password: values.password,
-            displayName: selectedRole === 'Employee' || selectedRole === 'Admin' || selectedRole === 'Super Admin' 
-                ? `${values.name} ${values.surname}` 
-                : values.name,
+            displayName: values.name,
             role: values.role,
             phone: values.phone,
             surname: values.surname,
