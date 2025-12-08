@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
@@ -105,7 +104,7 @@ export function SignupForm() {
           name="role"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Role</FormLabel>
+              <FormLabel>I am a...</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -127,10 +126,10 @@ export function SignupForm() {
         {selectedRole === 'Employee' || selectedRole === 'Admin' || selectedRole === 'Super Admin' ? (
             <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="name" render={({ field }) => (
-                    <FormItem><FormLabel>Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
                 <FormField control={form.control} name="surname" render={({ field }) => (
-                    <FormItem><FormLabel>Surname</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
             </div>
         ) : (
@@ -153,14 +152,8 @@ export function SignupForm() {
         )}/>
         
         <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isLoading}>
-          {isLoading ? <Loader2 className="animate-spin" /> : `Sign Up as ${selectedRole}`}
+          {isLoading ? <Loader2 className="animate-spin" /> : `Sign Up`}
         </Button>
-        <div className="text-center text-sm">
-          Already have an account?{' '}
-          <Link href="/login" className="underline hover:text-primary">
-            Sign in here
-          </Link>
-        </div>
       </form>
     </Form>
   );
