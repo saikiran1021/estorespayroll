@@ -1,25 +1,6 @@
 'use server';
 
-import { getApps, initializeApp, App, cert } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
-
-// This is a private utility function to ensure Firebase Admin is initialized only once.
-function getFirebaseAdmin(): App {
-  if (getApps().length > 0) {
-    return getApps()[0];
-  }
-
-  // In a managed environment like this, initializeApp() should be called without arguments.
-  // It automatically discovers the credentials from the environment.
-  try {
-    return initializeApp();
-  } catch (error: any) {
-    console.error("Failed to initialize Firebase Admin SDK automatically.", error);
-    // This generic error is better than a specific service account error.
-    throw new Error("Could not connect to Firebase services on the server. Please contact support.");
-  }
-}
+import { adminAuth, adminDb } from '@/lib/firebaseAdmin';
 
 type UserRole = 'Employee' | 'Admin' | 'Super Admin' | 'College' | 'Industry';
 
@@ -37,10 +18,6 @@ interface CreateUserPayload {
 
 export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?: string; error?: string }> {
   try {
-    const adminApp = getFirebaseAdmin();
-    const auth = getAuth(adminApp);
-    const db = getFirestore(adminApp);
-
     const {
       email,
       password,
@@ -56,7 +33,7 @@ export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?:
         throw new Error("A password is required to create a new user.");
     }
 
-    const userRecord = await auth.createUser({
+    const userRecord = await adminAuth.createUser({
       email,
       password,
       displayName,
@@ -86,7 +63,7 @@ export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?:
     }
 
     // Main user profile document
-    const userDocRef = db.collection(collectionName).doc(userRecord.uid);
+    const userDocRef = adminDb.collection(collectionName).doc(userRecord.uid);
     let userProfile: any = {
       id: userRecord.uid,
       name: displayName,
@@ -109,12 +86,12 @@ export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?:
     await userDocRef.set(userProfile, { merge: true });
 
     // Role mapping document
-    const roleMapDocRef = db.collection(roleCollectionName).doc(userRecord.uid);
+    const roleMapDocRef = adminDb.collection(roleCollectionName).doc(userRecord.uid);
     await roleMapDocRef.set({ uid: userRecord.uid }, { merge: true });
     
     // Handle sub-collection data for College or Industry
     if (role === 'College' && payload.collegeData) {
-        const collegeDataDocRef = db.collection(`colleges/${userRecord.uid}/collegeData`).doc(userRecord.uid);
+        const collegeDataDocRef = adminDb.collection(`colleges/${userRecord.uid}/collegeData`).doc(userRecord.uid);
         await collegeDataDocRef.set({
             ...payload.collegeData,
             id: userRecord.uid,
@@ -123,7 +100,7 @@ export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?:
     }
     
     if (role === 'Industry' && payload.industryData) {
-        const industryDataDocRef = db.collection(`industries/${userRecord.uid}/industryData`).doc(userRecord.uid);
+        const industryDataDocRef = adminDb.collection(`industries/${userRecord.uid}/industryData`).doc(userRecord.uid);
         await industryDataDocRef.set({
             ...payload.industryData,
             id: userRecord.uid,
@@ -133,8 +110,8 @@ export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?:
 
     return { uid: userRecord.uid };
   } catch (error: any) {
-    console.error('User creation failed:', error.message);
+    console.error('User creation failed:', error);
     // Return a structured error to the client
-    return { error: error.message };
+    return { error: error.message || "An unknown error occurred during user creation." };
   }
 }
