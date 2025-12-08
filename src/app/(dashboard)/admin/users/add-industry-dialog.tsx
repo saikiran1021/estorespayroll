@@ -46,7 +46,7 @@ const formSchema = z
     phone: z.string().min(10, 'Must be at least 10 digits.'),
     password: z.string().min(8, 'Password must be at least 8 characters.'),
     confirmPassword: z.string(),
-    photoUrl: z.string().url('Must be a valid URL.').optional().or(z.literal('')),
+    photoUrl: z.union([z.string().url(), z.literal('')]),
     type: z.string().min(1, 'Industry type is required.'),
     advisorName: z.string().min(1, "Advisor's name is required."),
   })
