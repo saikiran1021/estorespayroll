@@ -1,6 +1,6 @@
 'use server';
 
-import { getApps, initializeApp, App, cert } from 'firebase-admin/app';
+import { getApps, initializeApp, App } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -10,29 +10,12 @@ function getFirebaseAdmin(): App {
     return getApps()[0];
   }
 
-  // In a managed environment, initializeApp() should be called without arguments.
+  // In a managed environment like this, initializeApp() should be called without arguments.
   // It automatically discovers the credentials from the environment.
-  // We will check for explicit environment variables first, as suggested for some environments.
   try {
-     if (
-      process.env.FIREBASE_PROJECT_ID &&
-      process.env.FIREBASE_CLIENT_EMAIL &&
-      process.env.FIREBASE_PRIVATE_KEY
-    ) {
-      return initializeApp({
-        credential: cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          // The private key needs to be parsed correctly.
-          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        }),
-      });
-    } else {
-      // Fallback for managed environments where GOOGLE_APPLICATION_CREDENTIALS is set
-      return initializeApp();
-    }
+    return initializeApp();
   } catch (error: any) {
-    console.error("Failed to initialize Firebase Admin SDK.", error);
+    console.error("Failed to initialize Firebase Admin SDK automatically.", error);
     // This generic error is better than a specific service account error.
     throw new Error("Could not connect to Firebase services on the server. Please contact support.");
   }
