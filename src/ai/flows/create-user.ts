@@ -15,10 +15,13 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp, getApps, App } from 'firebase-admin/app';
 
 // Ensure Firebase Admin is initialized only once.
+let adminApp: App;
 if (!getApps().length) {
-  initializeApp();
+  adminApp = initializeApp();
+} else {
+  adminApp = getApps()[0];
 }
-const adminApp = getApps()[0];
+
 
 async function generateEmployeeId(
   db: FirebaseFirestore.Firestore,
