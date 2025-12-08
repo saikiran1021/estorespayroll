@@ -43,7 +43,7 @@ const formSchema = z
   .object({
     industryName: z.string().min(1, 'Industry name is required.'),
     email: z.string().email('Invalid email address.'),
-    phone: z.string().min(10, 'Must be at least 10 digits.'),
+    phone: z.string().optional(),
     password: z.string().min(8, 'Password must be at least 8 characters.'),
     confirmPassword: z.string(),
     photoUrl: z.union([z.string().url().optional(), z.literal('')]),
@@ -102,7 +102,7 @@ export function AddIndustryDialog() {
         department: '', // Placeholder
         numStudents: 0, // Placeholder
         advisorName: values.advisorName || '',
-        contactNum: values.phone,
+        contactNum: values.phone || '',
         email: values.email,
         photoUrl: values.photoUrl || '',
       });
@@ -149,9 +149,6 @@ export function AddIndustryDialog() {
                <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem><FormLabel>Login Email</FormLabel><FormControl><Input type="email" placeholder="contact@techcorp.com" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
-              <FormField control={form.control} name="phone" render={({ field }) => (
-                <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input placeholder="987-654-3210" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
                <FormField control={form.control} name="password" render={({ field }) => (
                 <FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
@@ -160,6 +157,9 @@ export function AddIndustryDialog() {
               )}/>
               
               <h4 className="text-md font-semibold pt-4 border-t mt-4">Additional Information (Optional)</h4>
+              <FormField control={form.control} name="phone" render={({ field }) => (
+                <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input placeholder="987-654-3210" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
                <FormField control={form.control} name="photoUrl" render={({ field }) => (
                 <FormItem><FormLabel>Profile Photo URL</FormLabel><FormControl><Input placeholder="https://example.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>

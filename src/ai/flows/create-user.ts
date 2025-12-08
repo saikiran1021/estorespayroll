@@ -12,11 +12,14 @@ import type { CreateUserInput, CreateUserOutput } from './create-user.types';
 
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { initializeApp, getApps, App } from 'firebase-admin/app';
 
 // Ensure Firebase Admin is initialized only once.
-if (getApps().length === 0) {
-  initializeApp();
+let adminApp: App;
+if (!getApps().length) {
+  adminApp = initializeApp();
+} else {
+  adminApp = getApps()[0];
 }
 
 
@@ -40,8 +43,8 @@ export const createUserFlow = ai.defineFlow(
     outputSchema: CreateUserOutputSchema,
   },
   async (payload) => {
-    const auth = getAuth();
-    const db = getFirestore();
+    const auth = getAuth(adminApp);
+    const db = getFirestore(adminApp);
 
     const {
       email,
@@ -86,7 +89,7 @@ export const createUserFlow = ai.defineFlow(
     let userData: any = {
       id: userRecord.uid,
       name: displayName,
-      phone: phone,
+      phone: phone || '',
       email: email,
       lastLogin: new Date().toISOString(),
       isVerified: false,
