@@ -28,7 +28,6 @@ export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?:
       surname,
     } = payload;
     
-    // Password must exist for user creation via email/password
     if (!password) {
         throw new Error("A password is required to create a new user.");
     }
@@ -62,7 +61,6 @@ export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?:
       throw new Error('Invalid role selected');
     }
 
-    // Main user profile document
     const userDocRef = adminDb.collection(collectionName).doc(userRecord.uid);
     let userProfile: any = {
       id: userRecord.uid,
@@ -74,22 +72,19 @@ export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?:
       photoUrl: photoUrl || ''
     };
 
-    if (role === 'Employee' && surname) {
-      userProfile.surname = surname;
-      // Simple employee ID, can be made more robust later
-      userProfile.employeeId = `EMP-${userRecord.uid.substring(0, 6).toUpperCase()}`;
-    } else if ((role === 'Admin' || role === 'Super Admin') && surname) {
-        userProfile.surname = surname;
+    if (role === 'Employee' || role === 'Admin' || role === 'Super Admin') {
+      if (surname) userProfile.surname = surname;
+      if (role === 'Employee') {
+        userProfile.employeeId = `EMP-${userRecord.uid.substring(0, 6).toUpperCase()}`;
+      }
     }
 
 
     await userDocRef.set(userProfile, { merge: true });
 
-    // Role mapping document
     const roleMapDocRef = adminDb.collection(roleCollectionName).doc(userRecord.uid);
     await roleMapDocRef.set({ uid: userRecord.uid }, { merge: true });
     
-    // Handle sub-collection data for College or Industry
     if (role === 'College' && payload.collegeData) {
         const collegeDataDocRef = adminDb.collection(`colleges/${userRecord.uid}/collegeData`).doc(userRecord.uid);
         await collegeDataDocRef.set({
