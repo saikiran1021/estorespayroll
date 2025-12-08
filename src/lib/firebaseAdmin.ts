@@ -7,9 +7,10 @@ import { getFirestore } from 'firebase-admin/firestore';
 // This function ensures the Firebase Admin SDK is initialized only once.
 function initializeAdminApp(): App {
   if (getApps().length > 0) {
-    // If the app is already initialized, return the existing app instance.
-    // This is crucial for preventing re-initialization errors in Next.js hot-reloading environments.
-    return getApps()[0];
+    const existingApp = getApps().find(app => app.name === 'firebase-admin-app');
+    if (existingApp) {
+      return existingApp;
+    }
   }
 
   // Retrieve credentials from environment variables.
@@ -24,7 +25,7 @@ function initializeAdminApp(): App {
     // initialization might work without explicit credentials by using Application Default Credentials.
     try {
       console.log("Attempting to initialize Firebase Admin with default credentials...");
-      return initializeApp();
+      return initializeApp({}, 'firebase-admin-app');
     } catch (e) {
       console.error("Default Firebase Admin initialization failed. Please ensure FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY environment variables are set correctly.", e);
       // If default also fails, it's a fatal configuration error.
@@ -40,7 +41,7 @@ function initializeAdminApp(): App {
       clientEmail,
       privateKey,
     }),
-  });
+  }, 'firebase-admin-app');
 }
 
 // Initialize the app and export the SDK services.

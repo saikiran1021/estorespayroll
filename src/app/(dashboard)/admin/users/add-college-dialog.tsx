@@ -17,42 +17,51 @@ import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { createNewUser } from './actions';
 
 export function AddCollegeDialog() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // State for all form fields
-  const [collegeName, setCollegeName] = useState('');
-  const [photoUrl, setPhotoUrl] = useState('');
-  const [authorizedName, setAuthorizedName] = useState('');
-  const [authorizedMobile, setAuthorizedMobile] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [industrialVisit, setIndustrialVisit] = useState('');
-  const [sem, setSem] = useState('');
-  const [tt, setTt] = useState('');
-  const [ws, setWs] = useState('');
-  const [international, setInternational] = useState('');
+  // Form state
+  const [formData, setFormData] = useState({
+      collegeName: '',
+      photoUrl: '',
+      authorizedName: '',
+      authorizedMobile: '',
+      email: '',
+      password: '',
+      industrialVisit: '',
+      sem: '',
+      tt: '',
+      ws: '',
+      international: '',
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({...prev, [id]: value}));
+  };
+
 
   const resetForm = () => {
-    setCollegeName('');
-    setPhotoUrl('');
-    setAuthorizedName('');
-    setAuthorizedMobile('');
-    setEmail('');
-    setPassword('');
-    setIndustrialVisit('');
-    setSem('');
-    setTt('');
-    setWs('');
-    setInternational('');
+    setFormData({
+      collegeName: '',
+      photoUrl: '',
+      authorizedName: '',
+      authorizedMobile: '',
+      email: '',
+      password: '',
+      industrialVisit: '',
+      sem: '',
+      tt: '',
+      ws: '',
+      international: '',
+    });
   };
 
   async function handleSubmit() {
-    if (!email || !password || !collegeName) {
+    if (!formData.email || !formData.password || !formData.collegeName) {
         toast({
             variant: 'destructive',
             title: 'Missing Required Fields',
@@ -63,42 +72,28 @@ export function AddCollegeDialog() {
 
     setIsLoading(true);
     try {
-      // Call the server action
-      const result = await createNewUser({
-        email,
-        password,
-        displayName: collegeName,
-        role: 'College',
-        phone: authorizedMobile,
-        photoUrl,
-        collegeData: {
-          authorizedName,
-          authorizedEmail: email,
-          authorizedMobile,
-          industrialVisit,
-          sem,
-          ws,
-          tt,
-          international,
-          photoUrl,
-        }
+      const response = await fetch('/api/admin/college', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
 
-      // Check if the server action returned an error
-      if (result.error) {
-        // This is the key change: throw the actual error message from the backend
-        throw new Error(result.error);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'An unknown error occurred.');
       }
 
       toast({
         title: 'College Added',
-        description: `${collegeName} has been successfully created.`,
+        description: `${formData.collegeName} has been successfully created.`,
       });
       resetForm();
       setIsOpen(false);
     } catch (error: any) {
       console.error("Error creating college:", error);
-      // The toast now displays the real error message from the server action
       toast({
         variant: 'destructive',
         title: 'Error Creating College',
@@ -127,23 +122,23 @@ export function AddCollegeDialog() {
         <div className="space-y-4">
             <div className="grid max-h-[60vh] gap-4 overflow-y-auto p-1">
                <h4 className="text-md font-semibold pt-2">College Details</h4>
-                <div><Label htmlFor="collegeName">College Name *</Label><Input id="collegeName" value={collegeName} onChange={(e) => setCollegeName(e.target.value)} placeholder="e.g., State University" /></div>
-                <div><Label htmlFor="photoUrl">Photo URL</Label><Input id="photoUrl" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://example.com/logo.png" /></div>
+                <div><Label htmlFor="collegeName">College Name *</Label><Input id="collegeName" value={formData.collegeName} onChange={handleInputChange} placeholder="e.g., State University" /></div>
+                <div><Label htmlFor="photoUrl">Photo URL</Label><Input id="photoUrl" value={formData.photoUrl} onChange={handleInputChange} placeholder="https://example.com/logo.png" /></div>
 
               <h4 className="text-md font-semibold pt-2">Authorized Person</h4>
-                <div><Label htmlFor="authorizedName">Full Name</Label><Input id="authorizedName" value={authorizedName} onChange={(e) => setAuthorizedName(e.target.value)} placeholder="e.g., Dr. Jane Doe" /></div>
-                <div><Label htmlFor="authorizedMobile">Mobile Number</Label><Input id="authorizedMobile" value={authorizedMobile} onChange={(e) => setAuthorizedMobile(e.target.value)} placeholder="123-456-7890" /></div>
+                <div><Label htmlFor="authorizedName">Full Name</Label><Input id="authorizedName" value={formData.authorizedName} onChange={handleInputChange} placeholder="e.g., Dr. Jane Doe" /></div>
+                <div><Label htmlFor="authorizedMobile">Mobile Number</Label><Input id="authorizedMobile" value={formData.authorizedMobile} onChange={handleInputChange} placeholder="123-456-7890" /></div>
 
               <h4 className="text-md font-semibold pt-2">Login Credentials</h4>
-                <div><Label htmlFor="email">Login Email *</Label><Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contact@stateuni.edu" /></div>
-                <div><Label htmlFor="password">Password *</Label><Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" /></div>
+                <div><Label htmlFor="email">Login Email *</Label><Input id="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="contact@stateuni.edu" /></div>
+                <div><Label htmlFor="password">Password *</Label><Input id="password" type="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" /></div>
 
               <h4 className="text-md font-semibold pt-4 border-t mt-4">Additional Information (Optional)</h4>
-                <div><Label htmlFor="industrialVisit">Industrial Visit</Label><Textarea id="industrialVisit" value={industrialVisit} onChange={(e) => setIndustrialVisit(e.target.value)} placeholder="Details about industrial visits..." /></div>
-                <div><Label htmlFor="sem">SEM</Label><Textarea id="sem" value={sem} onChange={(e) => setSem(e.target.value)} placeholder="Details about SEM..." /></div>
-                <div><Label htmlFor="tt">TT</Label><Textarea id="tt" value={tt} onChange={(e) => setTt(e.target.value)} placeholder="Details about TT..." /></div>
-                <div><Label htmlFor="ws">W/S (Workshop)</Label><Textarea id="ws" value={ws} onChange={(e) => setWs(e.target.value)} placeholder="Details about workshops..." /></div>
-                <div><Label htmlFor="international">International Programs</Label><Textarea id="international" value={international} onChange={(e) => setInternational(e.target.value)} placeholder="Details about international programs..." /></div>
+                <div><Label htmlFor="industrialVisit">Industrial Visit</Label><Textarea id="industrialVisit" value={formData.industrialVisit} onChange={handleInputChange} placeholder="Details about industrial visits..." /></div>
+                <div><Label htmlFor="sem">SEM</Label><Textarea id="sem" value={formData.sem} onChange={handleInputChange} placeholder="Details about SEM..." /></div>
+                <div><Label htmlFor="tt">TT</Label><Textarea id="tt" value={formData.tt} onChange={handleInputChange} placeholder="Details about TT..." /></div>
+                <div><Label htmlFor="ws">W/S (Workshop)</Label><Textarea id="ws" value={formData.ws} onChange={handleInputChange} placeholder="Details about workshops..." /></div>
+                <div><Label htmlFor="international">International Programs</Label><Textarea id="international" value={formData.international} onChange={handleInputChange} placeholder="Details about international programs..." /></div>
             </div>
             <DialogFooter>
                 <DialogClose asChild>
