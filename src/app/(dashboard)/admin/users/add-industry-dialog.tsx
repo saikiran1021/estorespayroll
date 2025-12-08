@@ -33,10 +33,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useFirestore } from '@/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { createUser } from '@/ai/flows/create-user';
-import type { CreateUserInput } from '@/ai/flows/create-user.types';
+import { createNewUser } from './actions';
 
 
 const formSchema = z
@@ -57,7 +54,6 @@ const formSchema = z
 
 export function AddIndustryDialog() {
   const { toast } = useToast();
-  const db = useFirestore();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -78,34 +74,29 @@ export function AddIndustryDialog() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const createUserInput: CreateUserInput = {
+      const result = await createNewUser({
         email: values.email,
         password: values.password,
         displayName: values.industryName,
         role: 'Industry',
         phone: values.phone,
-        photoUrl: values.photoUrl
-      };
-       const newUser = await createUser(createUserInput);
-
-      if (!db) {
-        throw new Error('Firestore is not initialized');
-      }
-
-      // Create industry data sub-collection document
-      const industryDataDocRef = doc(db, `industries/${newUser.uid}/industryData`, newUser.uid);
-      await setDoc(industryDataDocRef, {
-        id: newUser.uid,
-        industryId: newUser.uid,
-        type: values.type || '',
-        dates: serverTimestamp(), // Placeholder, as not in form
-        department: '', // Placeholder
-        numStudents: 0, // Placeholder
-        advisorName: values.advisorName || '',
-        contactNum: values.phone || '',
-        email: values.email,
-        photoUrl: values.photoUrl || '',
+        photoUrl: values.photoUrl,
+        industryData: {
+            type: values.type || '',
+            advisorName: values.advisorName || '',
+            contactNum: values.phone || '',
+            email: values.email,
+            photoUrl: values.photoUrl || '',
+            // These fields were not in the form, so setting default/empty values
+            dates: new Date().toISOString(),
+            department: '',
+            numStudents: 0,
+        }
       });
+
+       if (result.error) {
+        throw new Error(result.error);
+      }
 
       toast({
         title: 'Industry Added',

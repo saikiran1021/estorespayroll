@@ -15,15 +15,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateProfile, onAuthStateChanged, type User, type AuthError } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import { useAuth, useFirestore, initiateEmailSignUp } from '@/firebase';
 import { Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { createUser } from '@/ai/flows/create-user';
+import { createNewUser } from '@/app/(dashboard)/admin/users/actions';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -70,14 +66,20 @@ export function SignupForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-        await createUser({
+        const result = await createNewUser({
             email: values.email,
             password: values.password,
-            displayName: values.role === 'Employee' || values.role === 'Admin' || values.role === 'Super Admin' ? `${values.name} ${values.surname}` : values.name,
+            displayName: selectedRole === 'Employee' || selectedRole === 'Admin' || selectedRole === 'Super Admin' 
+                ? `${values.name} ${values.surname}` 
+                : values.name,
             role: values.role,
             phone: values.phone,
             surname: values.surname,
         });
+
+        if (result.error) {
+            throw new Error(result.error);
+        }
 
         toast({
             title: 'Signup Successful',

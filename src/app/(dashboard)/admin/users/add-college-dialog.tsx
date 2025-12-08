@@ -27,10 +27,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { useFirestore } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
-import { createUser } from '@/ai/flows/create-user';
-import type { CreateUserInput } from '@/ai/flows/create-user.types';
+import { createNewUser } from './actions';
 
 
 const formSchema = z
@@ -55,7 +52,6 @@ const formSchema = z
 
 export function AddCollegeDialog() {
   const { toast } = useToast();
-  const db = useFirestore();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -80,35 +76,30 @@ export function AddCollegeDialog() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const createUserInput: CreateUserInput = {
+      const result = await createNewUser({
         email: values.email,
         password: values.password,
         displayName: values.collegeName,
         role: 'College',
         phone: values.authorizedMobile,
-        photoUrl: values.photoUrl
-      };
-
-      const newUser = await createUser(createUserInput);
-
-      if (!db) {
-        throw new Error('Firestore is not initialized');
-      }
-
-      const collegeDataDocRef = doc(db, `colleges/${newUser.uid}/collegeData`, newUser.uid);
-      await setDoc(collegeDataDocRef, {
-        id: newUser.uid,
-        collegeId: newUser.uid,
-        photoUrl: values.photoUrl || '',
-        authorizedName: values.authorizedName || '',
-        authorizedEmail: values.email, // Use login email for authorized email
-        authorizedMobile: values.authorizedMobile || '',
-        industrialVisit: values.industrialVisit || '',
-        sem: values.sem || '',
-        ws: values.ws || '',
-        tt: values.tt || '',
-        international: values.international || '',
+        photoUrl: values.photoUrl,
+        // College-specific data
+        collegeData: {
+          authorizedName: values.authorizedName,
+          authorizedEmail: values.email,
+          authorizedMobile: values.authorizedMobile,
+          industrialVisit: values.industrialVisit || '',
+          sem: values.sem || '',
+          ws: values.ws || '',
+          tt: values.tt || '',
+          international: values.international || '',
+          photoUrl: values.photoUrl || '',
+        }
       });
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
 
       toast({
         title: 'College Added',
