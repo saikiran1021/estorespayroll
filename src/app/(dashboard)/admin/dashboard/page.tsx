@@ -8,10 +8,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { LogoutButton } from '../../components/logout-button';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuthContext } from '@/context/auth-context';
 import { Badge } from '@/components/ui/badge';
-import { Banknote, Briefcase, CalendarDays, CheckCircle, XCircle } from 'lucide-react';
+import { Banknote, Briefcase, CalendarCheck, CalendarDays, CheckCircle, Loader2, XCircle } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -27,6 +27,8 @@ import {
     TableRow,
   } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where, Timestamp, getDocs } from 'firebase/firestore';
 
 const mockEmployees = [
     { id: 'emp-001', name: 'John Doe', status: 'Paid', salary: '₹50,000.00' },
@@ -34,6 +36,109 @@ const mockEmployees = [
     { id: 'emp-003', name: 'Peter Jones', status: 'Pending', salary: '₹48,000.00' },
     { id: 'emp-004', name: 'Mary Williams', status: 'Paid', salary: '₹62,000.00' },
 ];
+
+interface EmployeeWithAttendance extends Document {
+  id: string;
+  name: string;
+  surname: string;
+  email: string;
+  attendanceStatus: 'Present' | 'Absent' | 'Not Marked';
+}
+
+function AttendanceOverview() {
+  const db = useFirestore();
+  const [employeesWithAttendance, setEmployeesWithAttendance] = useState<EmployeeWithAttendance[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const employeesQuery = useMemoFirebase(() => {
+    if (!db) return null;
+    return query(collection(db, 'employees'));
+  }, [db]);
+
+  const { data: employees, isLoading: isLoadingEmployees } = useCollection(employeesQuery);
+
+  useEffect(() => {
+    if (isLoadingEmployees || !employees || !db) return;
+
+    const fetchAttendanceForAll = async () => {
+      setIsLoading(true);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const startOfToday = Timestamp.fromDate(today);
+
+      const attendancePromises = employees.map(async (employee) => {
+        const attendanceQuery = query(
+          collection(db, 'employees', employee.id, 'attendance'),
+          where('date', '>=', startOfToday)
+        );
+        const attendanceSnapshot = await getDocs(attendanceQuery);
+        let status: EmployeeWithAttendance['attendanceStatus'] = 'Not Marked';
+        if (!attendanceSnapshot.empty) {
+          status = attendanceSnapshot.docs[0].data().status;
+        }
+        return { ...employee, attendanceStatus: status } as EmployeeWithAttendance;
+      });
+
+      const results = await Promise.all(attendancePromises);
+      setEmployeesWithAttendance(results);
+      setIsLoading(false);
+    };
+
+    fetchAttendanceForAll();
+  }, [employees, isLoadingEmployees, db]);
+
+  const getStatusBadge = (status: EmployeeWithAttendance['attendanceStatus']) => {
+    switch (status) {
+      case 'Present':
+        return <Badge className="bg-green-500 text-white hover:bg-green-600">Present</Badge>;
+      case 'Absent':
+        return <Badge variant="destructive">Absent</Badge>;
+      case 'Not Marked':
+        return <Badge variant="secondary">Not Marked</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+
+  return (
+    <CardContent>
+        {isLoading ? (
+        <div className="flex justify-center items-center h-48">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+        ) : (
+        <Table>
+            <TableHeader>
+            <TableRow>
+                <TableHead>Employee Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Today's Status</TableHead>
+            </TableRow>
+            </TableHeader>
+            <TableBody>
+            {employeesWithAttendance.length > 0 ? (
+                employeesWithAttendance.map((employee) => (
+                <TableRow key={employee.id}>
+                    <TableCell className="font-medium">{employee.name} {employee.surname}</TableCell>
+                    <TableCell>{employee.email}</TableCell>
+                    <TableCell>
+                    {getStatusBadge(employee.attendanceStatus)}
+                    </TableCell>
+                </TableRow>
+                ))
+            ) : (
+                <TableRow>
+                <TableCell colSpan={3} className="h-24 text-center">
+                    No employees found.
+                </TableCell>
+                </TableRow>
+            )}
+            </TableBody>
+        </Table>
+        )}
+    </CardContent>
+  )
+}
 
 export default function AdminDashboard() {
   const { user, userRole } = useAuthContext();
@@ -153,9 +258,7 @@ export default function AdminDashboard() {
                 </div>
            </AccordionTrigger>
             <AccordionContent>
-                <CardContent>
-                    <p className="text-muted-foreground text-center">Attendance overview details will be shown here.</p>
-                </CardContent>
+                <AttendanceOverview />
             </AccordionContent>
         </AccordionItem>
       </Accordion>
