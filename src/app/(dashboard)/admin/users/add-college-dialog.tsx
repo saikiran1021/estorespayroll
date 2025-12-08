@@ -39,7 +39,7 @@ const formSchema = z
     email: z.string().email('Invalid email address.'),
     password: z.string().min(8, 'Password must be at least 8 characters.'),
     confirmPassword: z.string(),
-    photoUrl: z.string().optional(),
+    photoUrl: z.string().url().or(z.literal('')).optional(),
     authorizedName: z.string().min(1, 'Authorized person name is required.'),
     authorizedMobile: z.string().min(1, 'Mobile number is required.'),
     industrialVisit: z.string().optional(),
