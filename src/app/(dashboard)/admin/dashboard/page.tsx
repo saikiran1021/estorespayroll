@@ -69,31 +69,24 @@ export default function AdminDashboard() {
         </CardHeader>
       </Card>
 
-      <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="item-1">
-          <AccordionTrigger>
-            <Card className="w-full">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Payslip Management
-                </CardTitle>
-                <Banknote className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">
-                  Review and manage employee salary payments.
-                </p>
-              </CardContent>
-            </Card>
-          </AccordionTrigger>
-          <AccordionContent>
-            <Card>
-                <CardHeader>
-                    <CardTitle>July 2024 Payslips</CardTitle>
-                    <CardDescription>Review and manage salary payments for all employees.</CardDescription>
-                </CardHeader>
+      <Accordion type="single" collapsible className="w-full space-y-4">
+        <AccordionItem value="item-1" className="border rounded-lg bg-card">
+            <AccordionTrigger className="p-6 hover:no-underline">
+                <div className="flex flex-row items-center justify-between space-y-0 w-full">
+                    <div className='text-left'>
+                        <CardTitle className="text-sm font-medium">
+                        Payslip Management
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                        Review and manage employee salary payments.
+                        </CardDescription>
+                    </div>
+                    <Banknote className="h-4 w-4 text-muted-foreground" />
+                </div>
+            </AccordionTrigger>
+            <AccordionContent>
                 <CardContent>
-                     <Table>
+                    <Table>
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Employee ID</TableHead>
@@ -110,7 +103,7 @@ export default function AdminDashboard() {
                                     <TableCell>{employee.name}</TableCell>
                                     <TableCell>{employee.salary}</TableCell>
                                     <TableCell>
-                                        <Badge className={employee.status === 'Paid' ? 'bg-green-500 text-white' : 'bg-yellow-500 text-white'}>
+                                        <Badge className={employee.status === 'Paid' ? 'bg-green-500 text-white hover:bg-green-500/90' : 'bg-yellow-500 text-white hover:bg-yellow-500/90'}>
                                             {employee.status === 'Paid' ? <CheckCircle className="mr-2 h-4 w-4" /> : <XCircle className="mr-2 h-4 w-4" />}
                                             {employee.status}
                                         </Badge>
@@ -123,55 +116,46 @@ export default function AdminDashboard() {
                         </TableBody>
                     </Table>
                 </CardContent>
-            </Card>
-          </AccordionContent>
+            </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="item-2">
-           <AccordionTrigger>
-            <Card className="w-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                    Employee Work Progress
-                    </CardTitle>
+        <AccordionItem value="item-2" className="border rounded-lg bg-card">
+           <AccordionTrigger className="p-6 hover:no-underline">
+                 <div className="flex flex-row items-center justify-between space-y-0 w-full">
+                    <div className='text-left'>
+                        <CardTitle className="text-sm font-medium">
+                        Employee Work Progress
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                        Track task completion and employee productivity.
+                        </CardDescription>
+                    </div>
                     <Briefcase className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <p className="text-xs text-muted-foreground">
-                    Track task completion and employee productivity.
-                    </p>
-                </CardContent>
-                </Card>
+                </div>
            </AccordionTrigger>
            <AccordionContent>
-                <Card>
-                    <CardContent className='pt-6'>
-                        <p className="text-muted-foreground text-center">Work progress details will be shown here.</p>
-                    </CardContent>
-                </Card>
+                <CardContent>
+                    <p className="text-muted-foreground text-center">Work progress details will be shown here.</p>
+                </CardContent>
            </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="item-3">
-           <AccordionTrigger>
-                <Card className="w-full">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <AccordionItem value="item-3" className="border rounded-lg bg-card">
+           <AccordionTrigger className="p-6 hover:no-underline">
+                <div className="flex flex-row items-center justify-between space-y-0 w-full">
+                    <div className='text-left'>
                         <CardTitle className="text-sm font-medium">
                         Attendance Overview
                         </CardTitle>
-                        <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-xs text-muted-foreground">
+                        <CardDescription className="text-xs">
                         Monitor daily employee attendance records.
-                        </p>
-                    </CardContent>
-                </Card>
+                        </CardDescription>
+                    </div>
+                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                </div>
            </AccordionTrigger>
             <AccordionContent>
-                <Card>
-                    <CardContent className='pt-6'>
-                        <p className="text-muted-foreground text-center">Attendance overview details will be shown here.</p>
-                    </CardContent>
-                </Card>
+                <CardContent>
+                    <p className="text-muted-foreground text-center">Attendance overview details will be shown here.</p>
+                </CardContent>
             </AccordionContent>
         </AccordionItem>
       </Accordion>
