@@ -46,7 +46,7 @@ const formSchema = z
     phone: z.string().optional(),
     password: z.string().min(8, 'Password must be at least 8 characters.'),
     confirmPassword: z.string(),
-    photoUrl: z.union([z.string().url().optional(), z.literal('')]),
+    photoUrl: z.string().optional(),
     type: z.string().optional(),
     advisorName: z.string().optional(),
   })
