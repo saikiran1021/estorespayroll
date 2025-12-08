@@ -46,9 +46,9 @@ const formSchema = z
     phone: z.string().min(10, 'Must be at least 10 digits.'),
     password: z.string().min(8, 'Password must be at least 8 characters.'),
     confirmPassword: z.string(),
-    photoUrl: z.union([z.string().url(), z.literal('')]),
-    type: z.string().min(1, 'Industry type is required.'),
-    advisorName: z.string().min(1, "Advisor's name is required."),
+    photoUrl: z.union([z.string().url().optional(), z.literal('')]),
+    type: z.string().optional(),
+    advisorName: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -97,11 +97,11 @@ export function AddIndustryDialog() {
       await setDoc(industryDataDocRef, {
         id: newUser.uid,
         industryId: newUser.uid,
-        type: values.type,
+        type: values.type || '',
         dates: serverTimestamp(), // Placeholder, as not in form
         department: '', // Placeholder
         numStudents: 0, // Placeholder
-        advisorName: values.advisorName,
+        advisorName: values.advisorName || '',
         contactNum: values.phone,
         email: values.email,
         photoUrl: values.photoUrl || '',
@@ -142,12 +142,9 @@ export function AddIndustryDialog() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid max-h-[60vh] gap-4 overflow-y-auto p-1">
-               <h4 className="text-md font-semibold pt-2">Industry Details</h4>
+               <h4 className="text-md font-semibold pt-2">Industry Credentials (Required)</h4>
               <FormField control={form.control} name="industryName" render={({ field }) => (
                 <FormItem><FormLabel>Industry Name</FormLabel><FormControl><Input placeholder="e.g., Tech Corp" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-               <FormField control={form.control} name="photoUrl" render={({ field }) => (
-                <FormItem><FormLabel>Profile Photo URL</FormLabel><FormControl><Input placeholder="https://example.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
                <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem><FormLabel>Login Email</FormLabel><FormControl><Input type="email" placeholder="contact@techcorp.com" {...field} /></FormControl><FormMessage /></FormItem>
@@ -162,7 +159,10 @@ export function AddIndustryDialog() {
                 <FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
               
-              <h4 className="text-md font-semibold pt-4 border-t mt-4">Additional Information</h4>
+              <h4 className="text-md font-semibold pt-4 border-t mt-4">Additional Information (Optional)</h4>
+               <FormField control={form.control} name="photoUrl" render={({ field }) => (
+                <FormItem><FormLabel>Profile Photo URL</FormLabel><FormControl><Input placeholder="https://example.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
                <FormField control={form.control} name="type" render={({ field }) => (
                 <FormItem><FormLabel>Industry Type</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>

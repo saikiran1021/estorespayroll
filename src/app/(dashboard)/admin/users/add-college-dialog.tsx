@@ -40,15 +40,15 @@ const formSchema = z
     phone: z.string().min(10, 'Must be at least 10 digits.'),
     password: z.string().min(8, 'Password must be at least 8 characters.'),
     confirmPassword: z.string(),
-    photoUrl: z.union([z.string().url(), z.literal('')]),
+    photoUrl: z.union([z.string().url().optional(), z.literal('')]),
     industrialVisit: z.string().optional(),
     sem: z.string().optional(),
     ws: z.string().optional(),
     tt: z.string().optional(),
     international: z.string().optional(),
-    authorizedName: z.string().min(1, "Authorized person's name is required."),
-    authorizedEmail: z.string().email('Invalid email for authorized person.'),
-    authorizedMobile: z.string().min(10, 'Authorized mobile must be at least 10 digits.'),
+    authorizedName: z.string().optional(),
+    authorizedEmail: z.union([z.string().email().optional(), z.literal('')]),
+    authorizedMobile: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -110,9 +110,9 @@ export function AddCollegeDialog() {
         tt: values.tt || '',
         international: values.international || '',
         photoUrl: values.photoUrl || '',
-        authorizedName: values.authorizedName,
-        authorizedEmail: values.authorizedEmail,
-        authorizedMobile: values.authorizedMobile,
+        authorizedName: values.authorizedName || '',
+        authorizedEmail: values.authorizedEmail || '',
+        authorizedMobile: values.authorizedMobile || '',
       });
 
       toast({
@@ -150,12 +150,9 @@ export function AddCollegeDialog() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid max-h-[60vh] gap-4 overflow-y-auto p-1">
-               <h4 className="text-md font-semibold pt-2">College Details</h4>
+               <h4 className="text-md font-semibold pt-2">College Credentials (Required)</h4>
               <FormField control={form.control} name="collegeName" render={({ field }) => (
                 <FormItem><FormLabel>College Name</FormLabel><FormControl><Input placeholder="e.g., State University" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-               <FormField control={form.control} name="photoUrl" render={({ field }) => (
-                <FormItem><FormLabel>Profile Photo URL</FormLabel><FormControl><Input placeholder="https://example.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
                <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem><FormLabel>Login Email</FormLabel><FormControl><Input type="email" placeholder="contact@stateuni.edu" {...field} /></FormControl><FormMessage /></FormItem>
@@ -170,7 +167,12 @@ export function AddCollegeDialog() {
                 <FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
               
-              <h4 className="text-md font-semibold pt-4 border-t mt-4">Authorized Person</h4>
+              <h4 className="text-md font-semibold pt-4 border-t mt-4">Additional Details (Optional)</h4>
+               <FormField control={form.control} name="photoUrl" render={({ field }) => (
+                <FormItem><FormLabel>Profile Photo URL</FormLabel><FormControl><Input placeholder="https://example.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
+
+              <h4 className="text-md font-semibold pt-4">Authorized Person</h4>
               <FormField control={form.control} name="authorizedName" render={({ field }) => (
                 <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Dr. Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
@@ -181,8 +183,7 @@ export function AddCollegeDialog() {
                 <FormItem><FormLabel>Mobile Number</FormLabel><FormControl><Input placeholder="123-456-7890" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
 
-
-              <h4 className="text-md font-semibold pt-4 border-t mt-4">Program Details</h4>
+              <h4 className="text-md font-semibold pt-4">Program Details</h4>
               
               <FormField control={form.control} name="industrialVisit" render={({ field }) => (
                 <FormItem><FormLabel>Industrial Visit</FormLabel><FormControl><Textarea placeholder="Details about industrial visits..." {...field} /></FormControl><FormMessage /></FormItem>

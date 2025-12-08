@@ -5,18 +5,20 @@
 
 import { ai } from '@/ai/genkit';
 import {
-  CreateUserInput,
   CreateUserInputSchema,
-  CreateUserOutput,
   CreateUserOutputSchema,
 } from './create-user.types';
+import type { CreateUserInput, CreateUserOutput } from './create-user.types';
+
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp, getApps } from 'firebase-admin/app';
 
+// Ensure Firebase Admin is initialized only once.
 if (getApps().length === 0) {
   initializeApp();
 }
+
 
 async function generateEmployeeId(
   db: FirebaseFirestore.Firestore,
