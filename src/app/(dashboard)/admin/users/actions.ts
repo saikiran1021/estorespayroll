@@ -1,6 +1,6 @@
 'use server';
 
-import { getApps, initializeApp, App } from 'firebase-admin/app';
+import { getApps, initializeApp, App, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -9,6 +9,9 @@ function getFirebaseAdmin(): App {
   if (getApps().length > 0) {
     return getApps()[0];
   }
+  
+  // When running in a managed environment like Firebase App Hosting or Cloud Functions,
+  // initializeApp() without arguments automatically discovers service account credentials.
   return initializeApp();
 }
 
@@ -104,11 +107,10 @@ export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?:
     if (role === 'Employee' && surname) {
       userProfile.surname = surname;
       userProfile.employeeId = await generateEmployeeId(displayName, surname);
-    } else if (role === 'Admin' || role === 'Super Admin') {
-      if (surname) {
+    } else if ((role === 'Admin' || role === 'Super Admin') && surname) {
         userProfile.surname = surname;
-      }
     }
+
 
     await userDocRef.set(userProfile, { merge: true });
 
