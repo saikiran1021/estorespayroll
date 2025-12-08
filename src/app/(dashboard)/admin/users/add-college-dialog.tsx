@@ -30,6 +30,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useFirestore } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { createUser } from '@/ai/flows/create-user';
+import type { CreateUserInput } from '@/ai/flows/create-user.types';
+
 
 const formSchema = z
   .object({
@@ -82,14 +84,20 @@ export function AddCollegeDialog() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const newUser = await createUser({
+      const createUserInput: CreateUserInput = {
         email: values.email,
         password: values.password,
         displayName: values.collegeName,
         role: 'College',
         phone: values.phone,
         photoUrl: values.photoUrl
-      });
+      };
+
+      const newUser = await createUser(createUserInput);
+
+      if (!db) {
+        throw new Error('Firestore is not initialized');
+      }
 
       // Create college data sub-collection document
       const collegeDataDocRef = doc(db, `colleges/${newUser.uid}/collegeData`, newUser.uid);

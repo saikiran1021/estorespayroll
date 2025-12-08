@@ -36,6 +36,8 @@ import {
 import { useFirestore } from '@/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { createUser } from '@/ai/flows/create-user';
+import type { CreateUserInput } from '@/ai/flows/create-user.types';
+
 
 const formSchema = z
   .object({
@@ -76,14 +78,19 @@ export function AddIndustryDialog() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-       const newUser = await createUser({
+      const createUserInput: CreateUserInput = {
         email: values.email,
         password: values.password,
         displayName: values.industryName,
         role: 'Industry',
         phone: values.phone,
         photoUrl: values.photoUrl
-      });
+      };
+       const newUser = await createUser(createUserInput);
+
+      if (!db) {
+        throw new Error('Firestore is not initialized');
+      }
 
       // Create industry data sub-collection document
       const industryDataDocRef = doc(db, `industries/${newUser.uid}/industryData`, newUser.uid);

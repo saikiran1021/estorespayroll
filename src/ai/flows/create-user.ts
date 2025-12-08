@@ -4,43 +4,32 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
 import {
-  getAuth,
-} from 'firebase-admin/auth';
+  CreateUserInput,
+  CreateUserInputSchema,
+  CreateUserOutput,
+  CreateUserOutputSchema,
+} from './create-user.types';
+import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp, getApps } from 'firebase-admin/app';
 
-// When running in a managed environment, initializeApp() automatically finds the credentials.
 if (getApps().length === 0) {
   initializeApp();
 }
 
-export const CreateUserInputSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  displayName: z.string(),
-  role: z.enum(['Employee', 'Admin', 'Super Admin', 'College', 'Industry']),
-  phone: z.string().optional(),
-  surname: z.string().optional(),
-  photoUrl: z.string().url().optional().or(z.literal('')),
-});
-export type CreateUserInput = z.infer<typeof CreateUserInputSchema>;
-
-export const CreateUserOutputSchema = z.object({
-  uid: z.string(),
-  email: z.string(),
-  displayName: z.string(),
-});
-export type CreateUserOutput = z.infer<typeof CreateUserOutputSchema>;
-
-async function generateEmployeeId(db: FirebaseFirestore.Firestore, name: string, surname: string) {
-    const date = new Date();
-    const initials = (name.charAt(0) + surname.charAt(0)).toUpperCase();
-    const datePart = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-    return `ESG${datePart}${initials}`;
+async function generateEmployeeId(
+  db: FirebaseFirestore.Firestore,
+  name: string,
+  surname: string
+) {
+  const date = new Date();
+  const initials = (name.charAt(0) + surname.charAt(0)).toUpperCase();
+  const datePart = `${date.getFullYear()}${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, '0')}`;
+  return `ESG${datePart}${initials}`;
 }
-
 
 export const createUserFlow = ai.defineFlow(
   {
@@ -52,7 +41,15 @@ export const createUserFlow = ai.defineFlow(
     const auth = getAuth();
     const db = getFirestore();
 
-    const { email, password, displayName, role, photoUrl, phone, surname } = payload;
+    const {
+      email,
+      password,
+      displayName,
+      role,
+      photoUrl,
+      phone,
+      surname,
+    } = payload;
 
     const userRecord = await auth.createUser({
       email,
@@ -60,50 +57,53 @@ export const createUserFlow = ai.defineFlow(
       displayName,
       photoURL: photoUrl,
     });
-    
+
     const collections: { [key: string]: string } = {
-        Employee: 'employees',
-        Admin: 'admins',
-        'Super Admin': 'super_admins',
-        College: 'colleges',
-        Industry: 'industries',
+      Employee: 'employees',
+      Admin: 'admins',
+      'Super Admin': 'super_admins',
+      College: 'colleges',
+      Industry: 'industries',
     };
     const roleCollections: { [key: string]: string } = {
-        Employee: 'roles_employee',
-        Admin: 'roles_admin',
-        'Super Admin': 'roles_super_admin',
-        College: 'roles_college',
-        Industry: 'roles_industry',
-    }
+      Employee: 'roles_employee',
+      Admin: 'roles_admin',
+      'Super Admin': 'roles_super_admin',
+      College: 'roles_college',
+      Industry: 'roles_industry',
+    };
 
     const collectionName = collections[role];
     const roleCollectionName = roleCollections[role];
-    
+
     if (!collectionName || !roleCollectionName) {
-        throw new Error('Invalid role selected');
+      throw new Error('Invalid role selected');
     }
 
     const userDocRef = db.collection(collectionName).doc(userRecord.uid);
     let userData: any = {
-        id: userRecord.uid,
-        name: displayName,
-        phone: phone,
-        email: email,
-        lastLogin: new Date().toISOString(),
-        isVerified: false,
+      id: userRecord.uid,
+      name: displayName,
+      phone: phone,
+      email: email,
+      lastLogin: new Date().toISOString(),
+      isVerified: false,
     };
-    
-    if (role === 'Employee' && surname) {
-        userData.surname = surname;
-        userData.name = displayName;
-        userData.employeeId = await generateEmployeeId(db, displayName, surname);
-    } else if (role === 'Admin' || role === 'Super Admin') {
-        if (surname) {
-          userData.surname = surname;
-        }
-        userData.name = displayName;
-    }
 
+    if (role === 'Employee' && surname) {
+      userData.surname = surname;
+      userData.name = displayName;
+      userData.employeeId = await generateEmployeeId(
+        db,
+        displayName,
+        surname
+      );
+    } else if (role === 'Admin' || role === 'Super Admin') {
+      if (surname) {
+        userData.surname = surname;
+      }
+      userData.name = displayName;
+    }
 
     await userDocRef.set(userData, { merge: true });
 
@@ -118,7 +118,8 @@ export const createUserFlow = ai.defineFlow(
   }
 );
 
-
-export async function createUser(input: CreateUserInput): Promise<CreateUserOutput> {
-    return createUserFlow(input);
+export async function createUser(
+  input: CreateUserInput
+): Promise<CreateUserOutput> {
+  return createUserFlow(input);
 }
