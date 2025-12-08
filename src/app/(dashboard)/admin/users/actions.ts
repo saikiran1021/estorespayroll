@@ -1,6 +1,6 @@
 'use server';
 
-import { getApps, initializeApp, App } from 'firebase-admin/app';
+import { getApps, initializeApp, App, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 
@@ -34,19 +34,6 @@ interface CreateUserPayload {
   collegeData?: Record<string, any>;
   industryData?: Record<string, any>;
 }
-
-async function generateEmployeeId(
-  name: string,
-  surname: string
-) {
-  const date = new Date();
-  const initials = (name.charAt(0) + surname.charAt(0)).toUpperCase();
-  const datePart = `${date.getFullYear()}${(date.getMonth() + 1)
-    .toString()
-    .padStart(2, '0')}`;
-  return `ESG${datePart}${initials}`;
-}
-
 
 export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?: string; error?: string }> {
   try {
@@ -112,7 +99,8 @@ export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?:
 
     if (role === 'Employee' && surname) {
       userProfile.surname = surname;
-      userProfile.employeeId = await generateEmployeeId(displayName, surname);
+      // Simple employee ID, can be made more robust later
+      userProfile.employeeId = `EMP-${userRecord.uid.substring(0, 6).toUpperCase()}`;
     } else if ((role === 'Admin' || role === 'Super Admin') && surname) {
         userProfile.surname = surname;
     }
