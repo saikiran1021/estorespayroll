@@ -1,5 +1,4 @@
 'use server';
 
-// This file is being deprecated in favor of dedicated API routes.
-// The logic has been moved to /api/admin/college and /api/admin/industry.
-// This file can be safely removed in a future cleanup.
+// This file is intentionally left blank to resolve a build error.
+// It was previously removed but is still referenced by the build process.

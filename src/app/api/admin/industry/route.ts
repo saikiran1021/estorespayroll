@@ -59,12 +59,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ uid: userRecord.uid });
   } catch (err) {
     console.error('Firebase Admin error creating industry:', err);
-    let errorMessage = 'An unknown error occurred.';
-    if (err instanceof Error) {
-        errorMessage = err.message;
-    } else if (typeof err === 'object' && err && 'message' in err) {
-        errorMessage = (err as { message: string }).message;
-    }
+    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 },
