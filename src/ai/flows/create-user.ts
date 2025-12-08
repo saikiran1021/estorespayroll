@@ -15,13 +15,10 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp, getApps, App } from 'firebase-admin/app';
 
 // Ensure Firebase Admin is initialized only once.
-let adminApp: App;
 if (!getApps().length) {
-  adminApp = initializeApp();
-} else {
-  adminApp = getApps()[0];
+  initializeApp();
 }
-
+const adminApp = getApps()[0];
 
 async function generateEmployeeId(
   db: FirebaseFirestore.Firestore,
@@ -93,6 +90,7 @@ export const createUserFlow = ai.defineFlow(
       email: email,
       lastLogin: new Date().toISOString(),
       isVerified: false,
+      photoUrl: photoUrl || ''
     };
 
     if (role === 'Employee' && surname) {

@@ -37,18 +37,16 @@ const formSchema = z
   .object({
     collegeName: z.string().min(1, 'College name is required.'),
     email: z.string().email('Invalid email address.'),
-    phone: z.string().optional(),
     password: z.string().min(8, 'Password must be at least 8 characters.'),
     confirmPassword: z.string(),
-    photoUrl: z.union([z.string().url().optional(), z.literal('')]),
+    photoUrl: z.string().optional(),
+    authorizedName: z.string().min(1, 'Authorized person name is required.'),
+    authorizedMobile: z.string().min(1, 'Mobile number is required.'),
     industrialVisit: z.string().optional(),
     sem: z.string().optional(),
     ws: z.string().optional(),
     tt: z.string().optional(),
     international: z.string().optional(),
-    authorizedName: z.string().optional(),
-    authorizedEmail: z.union([z.string().email().optional(), z.literal('')]),
-    authorizedMobile: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -66,18 +64,16 @@ export function AddCollegeDialog() {
     defaultValues: {
       collegeName: '',
       email: '',
-      phone: '',
       password: '',
       confirmPassword: '',
       photoUrl: '',
+      authorizedName: '',
+      authorizedMobile: '',
       industrialVisit: '',
       sem: '',
       ws: '',
       tt: '',
       international: '',
-      authorizedName: '',
-      authorizedEmail: '',
-      authorizedMobile: '',
     },
   });
 
@@ -89,7 +85,7 @@ export function AddCollegeDialog() {
         password: values.password,
         displayName: values.collegeName,
         role: 'College',
-        phone: values.phone,
+        phone: values.authorizedMobile,
         photoUrl: values.photoUrl
       };
 
@@ -99,20 +95,19 @@ export function AddCollegeDialog() {
         throw new Error('Firestore is not initialized');
       }
 
-      // Create college data sub-collection document
       const collegeDataDocRef = doc(db, `colleges/${newUser.uid}/collegeData`, newUser.uid);
       await setDoc(collegeDataDocRef, {
         id: newUser.uid,
         collegeId: newUser.uid,
+        photoUrl: values.photoUrl || '',
+        authorizedName: values.authorizedName || '',
+        authorizedEmail: values.email, // Use login email for authorized email
+        authorizedMobile: values.authorizedMobile || '',
         industrialVisit: values.industrialVisit || '',
         sem: values.sem || '',
         ws: values.ws || '',
         tt: values.tt || '',
         international: values.international || '',
-        photoUrl: values.photoUrl || '',
-        authorizedName: values.authorizedName || '',
-        authorizedEmail: values.authorizedEmail || '',
-        authorizedMobile: values.authorizedMobile || '',
       });
 
       toast({
@@ -122,6 +117,7 @@ export function AddCollegeDialog() {
       form.reset();
       setIsOpen(false);
     } catch (error: any) {
+      console.error("Error creating college:", error);
       toast({
         variant: 'destructive',
         title: 'Error creating college',
@@ -150,10 +146,23 @@ export function AddCollegeDialog() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid max-h-[60vh] gap-4 overflow-y-auto p-1">
-               <h4 className="text-md font-semibold pt-2">College Credentials (Required)</h4>
+               <h4 className="text-md font-semibold pt-2">College Details (Required)</h4>
               <FormField control={form.control} name="collegeName" render={({ field }) => (
                 <FormItem><FormLabel>College Name</FormLabel><FormControl><Input placeholder="e.g., State University" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
+               <FormField control={form.control} name="photoUrl" render={({ field }) => (
+                <FormItem><FormLabel>Photo URL</FormLabel><FormControl><Input placeholder="https://example.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
+
+              <h4 className="text-md font-semibold pt-2">Authorized Person (Required)</h4>
+               <FormField control={form.control} name="authorizedName" render={({ field }) => (
+                <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Dr. Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
+               <FormField control={form.control} name="authorizedMobile" render={({ field }) => (
+                <FormItem><FormLabel>Mobile Number</FormLabel><FormControl><Input placeholder="123-456-7890" {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
+
+              <h4 className="text-md font-semibold pt-2">Login Credentials (Required)</h4>
                <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem><FormLabel>Login Email</FormLabel><FormControl><Input type="email" placeholder="contact@stateuni.edu" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
@@ -163,39 +172,19 @@ export function AddCollegeDialog() {
                <FormField control={form.control} name="confirmPassword" render={({ field }) => (
                 <FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
-              
-              <h4 className="text-md font-semibold pt-4 border-t mt-4">Additional Details (Optional)</h4>
-              <FormField control={form.control} name="phone" render={({ field }) => (
-                <FormItem><FormLabel>College Phone</FormLabel><FormControl><Input placeholder="987-654-3210" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-               <FormField control={form.control} name="photoUrl" render={({ field }) => (
-                <FormItem><FormLabel>Profile Photo URL</FormLabel><FormControl><Input placeholder="https://example.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
 
-              <h4 className="text-md font-semibold pt-4">Authorized Person</h4>
-              <FormField control={form.control} name="authorizedName" render={({ field }) => (
-                <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Dr. Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-              <FormField control={form.control} name="authorizedEmail" render={({ field }) => (
-                <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="jane.doe@stateuni.edu" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-              <FormField control={form.control} name="authorizedMobile" render={({ field }) => (
-                <FormItem><FormLabel>Mobile Number</FormLabel><FormControl><Input placeholder="123-456-7890" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-
-              <h4 className="text-md font-semibold pt-4">Program Details</h4>
-              
+              <h4 className="text-md font-semibold pt-4 border-t mt-4">Additional Information (Optional)</h4>
               <FormField control={form.control} name="industrialVisit" render={({ field }) => (
                 <FormItem><FormLabel>Industrial Visit</FormLabel><FormControl><Textarea placeholder="Details about industrial visits..." {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
                <FormField control={form.control} name="sem" render={({ field }) => (
                 <FormItem><FormLabel>SEM</FormLabel><FormControl><Textarea placeholder="Details about SEM..." {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
+              <FormField control={form.control} name="tt" render={({ field }) => (
+                <FormItem><FormLabel>TT</FormLabel><FormControl><Textarea placeholder="Details about TT..." {...field} /></FormControl><FormMessage /></FormItem>
+              )}/>
                <FormField control={form.control} name="ws" render={({ field }) => (
                 <FormItem><FormLabel>W/S (Workshop)</FormLabel><FormControl><Textarea placeholder="Details about workshops..." {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-               <FormField control={form.control} name="tt" render={({ field }) => (
-                <FormItem><FormLabel>TT</FormLabel><FormControl><Textarea placeholder="Details about TT..." {...field} /></FormControl><FormMessage /></FormItem>
               )}/>
                <FormField control={form.control} name="international" render={({ field }) => (
                 <FormItem><FormLabel>International Programs</FormLabel><FormControl><Textarea placeholder="Details about international programs..." {...field} /></FormControl><FormMessage /></FormItem>
