@@ -9,16 +9,11 @@ import {
   getAuth,
 } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { initializeApp, getApps } from 'firebase-admin/app';
 
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT
-  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-  : undefined;
-
+// When running in a managed environment, initializeApp() automatically finds the credentials.
 if (getApps().length === 0) {
-  initializeApp({
-    credential: cert(serviceAccount),
-  });
+  initializeApp();
 }
 
 export const CreateUserInputSchema = z.object({
@@ -103,7 +98,9 @@ export const createUserFlow = ai.defineFlow(
         userData.name = displayName;
         userData.employeeId = await generateEmployeeId(db, displayName, surname);
     } else if (role === 'Admin' || role === 'Super Admin') {
-        userData.surname = surname;
+        if (surname) {
+          userData.surname = surname;
+        }
         userData.name = displayName;
     }
 

@@ -23,10 +23,11 @@ import { useAuth, useFirestore, initiateEmailSignUp } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { createUser } from '@/ai/flows/create-user';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  surname: z.string().min(1, 'Surname is required'),
+  surname: z.string().optional(),
   phone: z.string().min(10, 'Phone number must be at least 10 digits'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
@@ -35,22 +36,21 @@ const formSchema = z.object({
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ['confirmPassword'],
+}).refine(data => {
+    if ((data.role === 'Employee' || data.role === 'Admin' || data.role === 'Super Admin') && !data.surname) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Surname is required for this role",
+    path: ['surname'],
 });
 
-function generateEmployeeId(name: string, surname: string) {
-    const initials = (name.charAt(0) + surname.charAt(0)).toUpperCase();
-    const datePart = format(new Date(), 'yyyyMM');
-    return `ESG${datePart}${initials}`;
-}
 
 export function SignupForm() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const auth = useAuth();
-  const db = useFirestore();
-
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -65,115 +65,36 @@ export function SignupForm() {
     },
   });
   
-  const values = form.watch();
-  const selectedRole = values.role;
+  const selectedRole = form.watch('role');
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user: User | null) => {
-        if (user && isSubmitting) {
-            try {
-                await updateProfile(user, {
-                    displayName: `${values.name} ${values.surname}`
-                });
-                
-                const role = values.role;
-                const collections: { [key: string]: string } = {
-                    Employee: 'employees',
-                    Admin: 'admins',
-                    'Super Admin': 'super_admins',
-                    College: 'colleges',
-                    Industry: 'industries',
-                };
-                const roleCollections: { [key: string]: string } = {
-                    Employee: 'roles_employee',
-                    Admin: 'roles_admin',
-                    'Super Admin': 'roles_super_admin',
-                    College: 'roles_college',
-                    Industry: 'roles_industry',
-                }
-
-                const collectionName = collections[role];
-                const roleCollectionName = roleCollections[role];
-                
-                if (!collectionName || !roleCollectionName) {
-                    throw new Error('Invalid role selected');
-                }
-
-                const userDocRef = doc(db, collectionName, user.uid);
-                let userData: any = {
-                    id: user.uid,
-                    name: values.name,
-                    surname: values.surname,
-                    phone: values.phone,
-                    email: values.email,
-                    lastLogin: new Date().toISOString(),
-                };
-                
-                if (role === 'Employee') {
-                    userData.employeeId = generateEmployeeId(values.name, values.surname);
-                } else if (role === 'College' || role === 'Industry') {
-                    // For College and Industry, use 'name' as the main identifier, not name/surname
-                    userData = {
-                        id: user.uid,
-                        name: values.name, // The form's "name" field will be the college/industry name
-                        phone: values.phone,
-                        email: values.email,
-                        lastLogin: new Date().toISOString(),
-                    };
-                }
-
-
-                await setDoc(userDocRef, userData, { merge: true });
-
-                const roleMapDocRef = doc(db, roleCollectionName, user.uid);
-                await setDoc(roleMapDocRef, { uid: user.uid }, { merge: true });
-                
-                await auth.signOut();
-
-                toast({
-                    title: 'Signup Successful',
-                    description: "You've been registered. Please log in.",
-                });
-                
-                router.push('/login');
-
-            } catch (error: any) {
-                 toast({
-                    variant: 'destructive',
-                    title: 'Signup Failed',
-                    description: error.message || 'An unexpected error occurred.',
-                });
-            } finally {
-                setIsLoading(false);
-                setIsSubmitting(false);
-            }
-        }
-    });
-
-    return () => unsubscribe();
-  }, [isSubmitting, values, router, toast, auth, db]);
-
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    setIsSubmitting(true);
-    
-    initiateEmailSignUp(auth, values.email, values.password, (error: AuthError) => {
+    try {
+        await createUser({
+            email: values.email,
+            password: values.password,
+            displayName: values.role === 'Employee' || values.role === 'Admin' || values.role === 'Super Admin' ? `${values.name} ${values.surname}` : values.name,
+            role: values.role,
+            phone: values.phone,
+            surname: values.surname,
+        });
+
+        toast({
+            title: 'Signup Successful',
+            description: "You've been registered. Please log in.",
+        });
+        
+        router.push('/login');
+
+    } catch (error: any) {
+         toast({
+            variant: 'destructive',
+            title: 'Signup Failed',
+            description: error.message || 'An unexpected error occurred.',
+        });
+    } finally {
         setIsLoading(false);
-        setIsSubmitting(false);
-        if (error.code === 'auth/email-already-in-use') {
-            toast({
-                variant: 'destructive',
-                title: 'Signup Failed',
-                description: 'This email address is already registered. Please sign in.',
-            });
-        } else {
-            toast({
-                variant: 'destructive',
-                title: 'Signup Failed',
-                description: error.message || 'An unexpected error occurred.',
-            });
-        }
-    });
+    }
   }
 
   return (
