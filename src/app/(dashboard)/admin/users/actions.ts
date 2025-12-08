@@ -6,18 +6,19 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 // This is a private utility function to ensure Firebase Admin is initialized only once.
 function getFirebaseAdmin(): App {
-  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!serviceAccount) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT environment variable is not set.');
-  }
-
   if (getApps().length > 0) {
     return getApps()[0];
   }
-  
-  return initializeApp({
-    credential: cert(JSON.parse(serviceAccount)),
-  });
+
+  // In a managed environment, initializeApp() might not need arguments.
+  // If it fails, it indicates a server configuration issue, not a code issue.
+  try {
+     return initializeApp();
+  } catch (error: any) {
+    console.error("Failed to initialize Firebase Admin SDK automatically.", error);
+    // This generic error is better than the specific "service account not set" one.
+    throw new Error("Could not connect to Firebase services on the server.");
+  }
 }
 
 type UserRole = 'Employee' | 'Admin' | 'Super Admin' | 'College' | 'Industry';
