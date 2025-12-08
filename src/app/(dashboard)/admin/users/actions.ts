@@ -75,7 +75,8 @@ export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?:
     if (role === 'Employee' || role === 'Admin' || role === 'Super Admin') {
       if (surname) userProfile.surname = surname;
       if (role === 'Employee') {
-        userProfile.employeeId = `EMP-${userRecord.uid.substring(0, 6).toUpperCase()}`;
+        // A simpler, more unique employee ID
+        userProfile.employeeId = `ESG${new Date().getFullYear()}${userRecord.uid.substring(0, 4).toUpperCase()}`;
       }
     }
 
@@ -105,7 +106,7 @@ export async function createNewUser(payload: CreateUserPayload): Promise<{ uid?:
 
     return { uid: userRecord.uid };
   } catch (error: any) {
-    console.error('User creation failed:', error);
+    console.error('User creation failed in server action:', error);
     // Return a structured error to the client
     return { error: error.message || "An unknown error occurred during user creation." };
   }

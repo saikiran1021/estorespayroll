@@ -63,6 +63,7 @@ export function AddCollegeDialog() {
 
     setIsLoading(true);
     try {
+      // Call the server action
       const result = await createNewUser({
         email,
         password,
@@ -83,7 +84,9 @@ export function AddCollegeDialog() {
         }
       });
 
+      // Check if the server action returned an error
       if (result.error) {
+        // This is the key change: throw the actual error message from the backend
         throw new Error(result.error);
       }
 
@@ -95,9 +98,10 @@ export function AddCollegeDialog() {
       setIsOpen(false);
     } catch (error: any) {
       console.error("Error creating college:", error);
+      // The toast now displays the real error message from the server action
       toast({
         variant: 'destructive',
-        title: 'Error creating college',
+        title: 'Error Creating College',
         description: error.message || 'An unexpected error occurred.',
       });
     } finally {
