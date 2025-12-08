@@ -15,85 +15,71 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { createNewUser } from './actions';
-
-
-const formSchema = z
-  .object({
-    collegeName: z.string().min(1, 'College name is required.'),
-    email: z.string().email('Invalid email address.'),
-    password: z.string().min(8, 'Password must be at least 8 characters.'),
-    confirmPassword: z.string(),
-    photoUrl: z.string().optional(),
-    authorizedName: z.string().min(1, 'Authorized person name is required.'),
-    authorizedMobile: z.string().min(1, 'Mobile number is required.'),
-    industrialVisit: z.string().optional(),
-    sem: z.string().optional(),
-    ws: z.string().optional(),
-    tt: z.string().optional(),
-    international: z.string().optional(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
-  });
 
 export function AddCollegeDialog() {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      collegeName: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      photoUrl: '',
-      authorizedName: '',
-      authorizedMobile: '',
-      industrialVisit: '',
-      sem: '',
-      ws: '',
-      tt: '',
-      international: '',
-    },
-  });
+  // State for all form fields
+  const [collegeName, setCollegeName] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [authorizedName, setAuthorizedName] = useState('');
+  const [authorizedMobile, setAuthorizedMobile] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [industrialVisit, setIndustrialVisit] = useState('');
+  const [sem, setSem] = useState('');
+  const [tt, setTt] = useState('');
+  const [ws, setWs] = useState('');
+  const [international, setInternational] = useState('');
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const resetForm = () => {
+    setCollegeName('');
+    setPhotoUrl('');
+    setAuthorizedName('');
+    setAuthorizedMobile('');
+    setEmail('');
+    setPassword('');
+    setIndustrialVisit('');
+    setSem('');
+    setTt('');
+    setWs('');
+    setInternational('');
+  };
+
+  async function handleSubmit() {
+    if (!email || !password || !collegeName) {
+        toast({
+            variant: 'destructive',
+            title: 'Missing Required Fields',
+            description: 'College Name, Login Email, and Password are required.',
+        });
+        return;
+    }
+
     setIsLoading(true);
     try {
       const result = await createNewUser({
-        email: values.email,
-        password: values.password,
-        displayName: values.collegeName,
+        email,
+        password,
+        displayName: collegeName,
         role: 'College',
-        phone: values.authorizedMobile,
-        photoUrl: values.photoUrl,
-        // College-specific data
+        phone: authorizedMobile,
+        photoUrl,
         collegeData: {
-          authorizedName: values.authorizedName,
-          authorizedEmail: values.email,
-          authorizedMobile: values.authorizedMobile,
-          industrialVisit: values.industrialVisit || '',
-          sem: values.sem || '',
-          ws: values.ws || '',
-          tt: values.tt || '',
-          international: values.international || '',
-          photoUrl: values.photoUrl || '',
+          authorizedName,
+          authorizedEmail: email,
+          authorizedMobile,
+          industrialVisit,
+          sem,
+          ws,
+          tt,
+          international,
+          photoUrl,
         }
       });
 
@@ -103,9 +89,9 @@ export function AddCollegeDialog() {
 
       toast({
         title: 'College Added',
-        description: `${values.collegeName} has been successfully created.`,
+        description: `${collegeName} has been successfully created.`,
       });
-      form.reset();
+      resetForm();
       setIsOpen(false);
     } catch (error: any) {
       console.error("Error creating college:", error);
@@ -131,67 +117,40 @@ export function AddCollegeDialog() {
         <DialogHeader>
           <DialogTitle>Add New College</DialogTitle>
           <DialogDescription>
-            Fill out the details below to create a new college user account.
+            Fill out the details below. Required fields are marked with an asterisk (*).
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-4">
             <div className="grid max-h-[60vh] gap-4 overflow-y-auto p-1">
-               <h4 className="text-md font-semibold pt-2">College Details (Required)</h4>
-              <FormField control={form.control} name="collegeName" render={({ field }) => (
-                <FormItem><FormLabel>College Name</FormLabel><FormControl><Input placeholder="e.g., State University" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-               <FormField control={form.control} name="photoUrl" render={({ field }) => (
-                <FormItem><FormLabel>Photo URL</FormLabel><FormControl><Input placeholder="https://example.com/logo.png" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
+               <h4 className="text-md font-semibold pt-2">College Details</h4>
+                <div><Label htmlFor="collegeName">College Name *</Label><Input id="collegeName" value={collegeName} onChange={(e) => setCollegeName(e.target.value)} placeholder="e.g., State University" /></div>
+                <div><Label htmlFor="photoUrl">Photo URL</Label><Input id="photoUrl" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://example.com/logo.png" /></div>
 
-              <h4 className="text-md font-semibold pt-2">Authorized Person (Required)</h4>
-               <FormField control={form.control} name="authorizedName" render={({ field }) => (
-                <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Dr. Jane Doe" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-               <FormField control={form.control} name="authorizedMobile" render={({ field }) => (
-                <FormItem><FormLabel>Mobile Number</FormLabel><FormControl><Input placeholder="123-456-7890" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
+              <h4 className="text-md font-semibold pt-2">Authorized Person</h4>
+                <div><Label htmlFor="authorizedName">Full Name</Label><Input id="authorizedName" value={authorizedName} onChange={(e) => setAuthorizedName(e.target.value)} placeholder="e.g., Dr. Jane Doe" /></div>
+                <div><Label htmlFor="authorizedMobile">Mobile Number</Label><Input id="authorizedMobile" value={authorizedMobile} onChange={(e) => setAuthorizedMobile(e.target.value)} placeholder="123-456-7890" /></div>
 
-              <h4 className="text-md font-semibold pt-2">Login Credentials (Required)</h4>
-               <FormField control={form.control} name="email" render={({ field }) => (
-                <FormItem><FormLabel>Login Email</FormLabel><FormControl><Input type="email" placeholder="contact@stateuni.edu" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-               <FormField control={form.control} name="password" render={({ field }) => (
-                <FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-               <FormField control={form.control} name="confirmPassword" render={({ field }) => (
-                <FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
+              <h4 className="text-md font-semibold pt-2">Login Credentials</h4>
+                <div><Label htmlFor="email">Login Email *</Label><Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contact@stateuni.edu" /></div>
+                <div><Label htmlFor="password">Password *</Label><Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" /></div>
 
               <h4 className="text-md font-semibold pt-4 border-t mt-4">Additional Information (Optional)</h4>
-              <FormField control={form.control} name="industrialVisit" render={({ field }) => (
-                <FormItem><FormLabel>Industrial Visit</FormLabel><FormControl><Textarea placeholder="Details about industrial visits..." {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-               <FormField control={form.control} name="sem" render={({ field }) => (
-                <FormItem><FormLabel>SEM</FormLabel><FormControl><Textarea placeholder="Details about SEM..." {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-              <FormField control={form.control} name="tt" render={({ field }) => (
-                <FormItem><FormLabel>TT</FormLabel><FormControl><Textarea placeholder="Details about TT..." {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-               <FormField control={form.control} name="ws" render={({ field }) => (
-                <FormItem><FormLabel>W/S (Workshop)</FormLabel><FormControl><Textarea placeholder="Details about workshops..." {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
-               <FormField control={form.control} name="international" render={({ field }) => (
-                <FormItem><FormLabel>International Programs</FormLabel><FormControl><Textarea placeholder="Details about international programs..." {...field} /></FormControl><FormMessage /></FormItem>
-              )}/>
+                <div><Label htmlFor="industrialVisit">Industrial Visit</Label><Textarea id="industrialVisit" value={industrialVisit} onChange={(e) => setIndustrialVisit(e.target.value)} placeholder="Details about industrial visits..." /></div>
+                <div><Label htmlFor="sem">SEM</Label><Textarea id="sem" value={sem} onChange={(e) => setSem(e.target.value)} placeholder="Details about SEM..." /></div>
+                <div><Label htmlFor="tt">TT</Label><Textarea id="tt" value={tt} onChange={(e) => setTt(e.target.value)} placeholder="Details about TT..." /></div>
+                <div><Label htmlFor="ws">W/S (Workshop)</Label><Textarea id="ws" value={ws} onChange={(e) => setWs(e.target.value)} placeholder="Details about workshops..." /></div>
+                <div><Label htmlFor="international">International Programs</Label><Textarea id="international" value={international} onChange={(e) => setInternational(e.target.value)} placeholder="Details about international programs..." /></div>
             </div>
             <DialogFooter>
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancel</Button>
                 </DialogClose>
-                <Button type="submit" disabled={isLoading}>
+                <Button onClick={handleSubmit} disabled={isLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Save College
                 </Button>
             </DialogFooter>
-          </form>
-        </Form>
+          </div>
       </DialogContent>
     </Dialog>
   );

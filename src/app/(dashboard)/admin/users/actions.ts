@@ -6,13 +6,18 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 // This is a private utility function to ensure Firebase Admin is initialized only once.
 function getFirebaseAdmin(): App {
+  const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!serviceAccount) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT environment variable is not set.');
+  }
+
   if (getApps().length > 0) {
     return getApps()[0];
   }
   
-  // When running in a managed environment like Firebase App Hosting or Cloud Functions,
-  // initializeApp() without arguments automatically discovers service account credentials.
-  return initializeApp();
+  return initializeApp({
+    credential: cert(JSON.parse(serviceAccount)),
+  });
 }
 
 type UserRole = 'Employee' | 'Admin' | 'Super Admin' | 'College' | 'Industry';
