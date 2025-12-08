@@ -10,14 +10,14 @@ function getFirebaseAdmin(): App {
     return getApps()[0];
   }
 
-  // In a managed environment, initializeApp() might not need arguments.
-  // If it fails, it indicates a server configuration issue, not a code issue.
+  // In a managed environment, initializeApp() should be called without arguments.
+  // It automatically discovers the credentials from the environment.
   try {
      return initializeApp();
   } catch (error: any) {
     console.error("Failed to initialize Firebase Admin SDK automatically.", error);
-    // This generic error is better than the specific "service account not set" one.
-    throw new Error("Could not connect to Firebase services on the server.");
+    // This generic error is better than a specific service account error.
+    throw new Error("Could not connect to Firebase services on the server. Please contact support.");
   }
 }
 
