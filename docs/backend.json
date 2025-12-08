@@ -35,6 +35,10 @@
           "type": "string",
           "description": "Timestamp of the employee's last login.",
           "format": "date-time"
+        },
+        "isVerified": {
+            "type": "boolean",
+            "description": "Indicates if the user account has been verified."
         }
       },
       "required": [
@@ -43,7 +47,8 @@
         "surname",
         "phone",
         "email",
-        "employeeId"
+        "employeeId",
+        "isVerified"
       ]
     },
     "Admin": {
@@ -77,6 +82,10 @@
           "type": "string",
           "description": "Timestamp of the admin's last login.",
           "format": "date-time"
+        },
+         "isVerified": {
+            "type": "boolean",
+            "description": "Indicates if the user account has been verified."
         }
       },
       "required": [
@@ -84,7 +93,8 @@
         "name",
         "surname",
         "phone",
-        "email"
+        "email",
+        "isVerified"
       ]
     },
     "SuperAdmin": {
@@ -118,6 +128,10 @@
           "type": "string",
           "description": "Timestamp of the super admin's last login.",
           "format": "date-time"
+        },
+        "isVerified": {
+            "type": "boolean",
+            "description": "Indicates if the user account has been verified."
         }
       },
       "required": [
@@ -125,7 +139,8 @@
         "name",
         "surname",
         "phone",
-        "email"
+        "email",
+        "isVerified"
       ]
     },
     "College": {
@@ -155,13 +170,18 @@
           "type": "string",
           "description": "Timestamp of the college's last login.",
           "format": "date-time"
+        },
+        "isVerified": {
+            "type": "boolean",
+            "description": "Indicates if the user account has been verified."
         }
       },
       "required": [
         "id",
         "name",
         "phone",
-        "email"
+        "email",
+        "isVerified"
       ]
     },
     "Industry": {
@@ -191,13 +211,18 @@
           "type": "string",
           "description": "Timestamp of the industry's last login.",
           "format": "date-time"
+        },
+         "isVerified": {
+            "type": "boolean",
+            "description": "Indicates if the user account has been verified."
         }
       },
       "required": [
         "id",
         "name",
         "phone",
-        "email"
+        "email",
+        "isVerified"
       ]
     },
     "Attendance": {

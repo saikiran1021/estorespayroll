@@ -28,13 +28,8 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirestore } from '@/firebase';
-import {
-  createUserWithEmailAndPassword,
-  updateProfile,
-} from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { getApp } from 'firebase/app';
+import { createUser } from '@/ai/flows/create-user';
 
 const formSchema = z
   .object({
@@ -63,9 +58,6 @@ export function AddCollegeDialog() {
   const db = useFirestore();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Create a temporary auth instance for user creation
-  const tempAuth = getAuth(getApp());
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -90,37 +82,20 @@ export function AddCollegeDialog() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        tempAuth,
-        values.email,
-        values.password
-      );
-      const user = userCredential.user;
-
-      await updateProfile(user, {
-        displayName: values.collegeName,
-        photoURL: values.photoUrl,
-      });
-
-      // Create college profile document
-      const collegeDocRef = doc(db, 'colleges', user.uid);
-      await setDoc(collegeDocRef, {
-        id: user.uid,
-        name: values.collegeName,
+      const newUser = await createUser({
         email: values.email,
+        password: values.password,
+        displayName: values.collegeName,
+        role: 'College',
         phone: values.phone,
-        lastLogin: new Date().toISOString(),
+        photoUrl: values.photoUrl
       });
-      
-      // Create role mapping document
-      const roleDocRef = doc(db, 'roles_college', user.uid);
-      await setDoc(roleDocRef, { uid: user.uid });
 
       // Create college data sub-collection document
-      const collegeDataDocRef = doc(db, `colleges/${user.uid}/collegeData`, user.uid);
+      const collegeDataDocRef = doc(db, `colleges/${newUser.uid}/collegeData`, newUser.uid);
       await setDoc(collegeDataDocRef, {
-        id: user.uid,
-        collegeId: user.uid,
+        id: newUser.uid,
+        collegeId: newUser.uid,
         industrialVisit: values.industrialVisit || '',
         sem: values.sem || '',
         ws: values.ws || '',
@@ -131,12 +106,6 @@ export function AddCollegeDialog() {
         authorizedEmail: values.authorizedEmail,
         authorizedMobile: values.authorizedMobile,
       });
-      
-      // Since we used a temporary auth instance, we should sign this user out
-      // so the admin's session is not disturbed.
-      if (tempAuth.currentUser?.uid === user.uid) {
-        await tempAuth.signOut();
-      }
 
       toast({
         title: 'College Added',
@@ -148,7 +117,7 @@ export function AddCollegeDialog() {
       toast({
         variant: 'destructive',
         title: 'Error creating college',
-        description: error.message,
+        description: error.message || 'An unexpected error occurred.',
       });
     } finally {
       setIsLoading(false);

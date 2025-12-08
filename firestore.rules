@@ -147,7 +147,7 @@ service cloud.firestore {
     match /industries/{industryId} {
       allow get: if isOwner(industryId) || isAdminOrSuperAdmin();
       allow list: if isAdminOrSuperAdmin() || isSignedIn();
-      allow create: if isOwner(industryId) && request.resource.data.id == industryId;
+      allow create: if (isOwner(industryId) || isAdminOrSuperAdmin()) && request.resource.data.id == industryId;
       allow update: if isExistingOwner(industryId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(industryId) || isSuperAdmin();
     }
@@ -211,7 +211,7 @@ service cloud.firestore {
     match /industries/{industryId}/industryData/{industryDataId} {
       allow get: if isOwner(industryId) || isAdminOrSuperAdmin();
       allow list: if isOwner(industryId) || isAdminOrSuperAdmin();
-      allow create: if isOwner(industryId) && request.resource.data.industryId == industryId;
+      allow create: if (isOwner(industryId) || isAdminOrSuperAdmin()) && request.resource.data.industryId == industryId;
       allow update: if (isExistingOwner(industryId) || isAdminOrSuperAdmin()) && request.resource.data.industryId == resource.data.industryId;
       allow delete: if isExistingOwner(industryId) || isAdminOrSuperAdmin();
     }
@@ -267,7 +267,7 @@ service cloud.firestore {
     match /roles_admin/{uid} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isOwner(uid) || isSuperAdmin();
+      allow create: if isOwner(uid) || isAdminOrSuperAdmin();
       allow update: if isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
@@ -297,7 +297,7 @@ service cloud.firestore {
     match /roles_employee/{uid} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isOwner(uid) || isSuperAdmin();
+      allow create: if isOwner(uid) || isAdminOrSuperAdmin();
       allow update: if isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
@@ -327,7 +327,7 @@ service cloud.firestore {
     match /roles_industry/{uid} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow create: if isOwner(uid) || isSuperAdmin();
+      allow create: if isOwner(uid) || isAdminOrSuperAdmin();
       allow update: if isSuperAdmin();
       allow delete: if isSuperAdmin();
     }

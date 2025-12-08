@@ -34,13 +34,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { useFirestore } from '@/firebase';
-import {
-  createUserWithEmailAndPassword,
-  updateProfile,
-} from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
-import { getApp } from 'firebase/app';
+import { createUser } from '@/ai/flows/create-user';
 
 const formSchema = z
   .object({
@@ -63,8 +58,6 @@ export function AddIndustryDialog() {
   const db = useFirestore();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
-  const tempAuth = getAuth(getApp());
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -83,37 +76,20 @@ export function AddIndustryDialog() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        tempAuth,
-        values.email,
-        values.password
-      );
-      const user = userCredential.user;
-
-      await updateProfile(user, {
-        displayName: values.industryName,
-        photoURL: values.photoUrl,
-      });
-
-      // Create industry profile document
-      const industryDocRef = doc(db, 'industries', user.uid);
-      await setDoc(industryDocRef, {
-        id: user.uid,
-        name: values.industryName,
+       const newUser = await createUser({
         email: values.email,
+        password: values.password,
+        displayName: values.industryName,
+        role: 'Industry',
         phone: values.phone,
-        lastLogin: new Date().toISOString(),
+        photoUrl: values.photoUrl
       });
-      
-      // Create role mapping document
-      const roleDocRef = doc(db, 'roles_industry', user.uid);
-      await setDoc(roleDocRef, { uid: user.uid });
 
       // Create industry data sub-collection document
-      const industryDataDocRef = doc(db, `industries/${user.uid}/industryData`, user.uid);
+      const industryDataDocRef = doc(db, `industries/${newUser.uid}/industryData`, newUser.uid);
       await setDoc(industryDataDocRef, {
-        id: user.uid,
-        industryId: user.uid,
+        id: newUser.uid,
+        industryId: newUser.uid,
         type: values.type,
         dates: serverTimestamp(), // Placeholder, as not in form
         department: '', // Placeholder
@@ -123,10 +99,6 @@ export function AddIndustryDialog() {
         email: values.email,
         photoUrl: values.photoUrl || '',
       });
-      
-      if (tempAuth.currentUser?.uid === user.uid) {
-        await tempAuth.signOut();
-      }
 
       toast({
         title: 'Industry Added',
